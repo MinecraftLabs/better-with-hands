@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "better_with_hands",
+	"version": "${version}",
+	"name": "Better With Hands",
+	"description": "A reimagining of the offhand system - what dual-wielding should have been from the start",
+	"authors": [
+		"SajmonOriginal"
+	],
+	"contact": {
+		"sources": "https://github.com/SajmonOriginal/better-with-hands"
+	},
+	"license": "MIT",
+	"icon": "icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.sajmonoriginal.betterwithhands.BetterWithHandsMod"
+		],
+		"client": [
+			"com.sajmonoriginal.betterwithhands.BetterWithHandsClientMod"
+		],
+		"afterClientStart": [
+			"com.sajmonoriginal.betterwithhands.BetterWithHandsClientMod"
+		]
+	},
+	"mixins": [
+		"better_with_hands.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=${fabricloader}",
+		"halplibe": "*",
+		"minecraft": "*",
+		"java": ">=${java}"
+	}
+}

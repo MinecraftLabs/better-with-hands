@@ -1,0 +1,28 @@
+{
+	"required": true,
+	"package": "com.sajmonoriginal.betterwithhands.mixin",
+	"compatibilityLevel": "JAVA_${java}",
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"mixins": [
+		"InventoryPlayerMixin",
+		"EntityPlayerMixin",
+		"MenuInventoryMixin",
+		"accessor.MenuAbstractAccessor"
+	],
+	"client": [
+		"client.GameSettingsMixin",
+		"client.GuiIngameMixin",
+		"client.GuiInventoryMixin",
+		"client.ItemRendererMixin",
+		"client.MinecraftMixin",
+		"client.MobRendererPlayerMixin",
+		"client.ModelBipedMixin",
+		"client.PlayerControllerMixin"
+	],
+	"server": [
+		"NetServerHandlerMixin",
+		"PacketHandlerServerMixin"
+	]
+}
