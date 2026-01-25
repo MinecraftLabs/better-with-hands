@@ -45,9 +45,11 @@ public abstract class GuiIngameMixin extends Gui {
     @Unique
     private ItemStack betterWithHands$lastOffhand = null;
     @Unique
-    private float betterWithHands$equipProgress = 0.0F;
+    private long betterWithHands$animationStartTime = 0L;
     @Unique
-    private float betterWithHands$prevEquipProgress = 0.0F;
+    private static final long EQUIP_ANIMATION_MS = 300L;
+    @Unique
+    private boolean betterWithHands$animatingIn = false;
 
     @Inject(method = "renderGameOverlay", at = @At("HEAD"))
     private void handleOffhandKeyInput(float partialTicks, boolean flag, int mouseX, int mouseY, CallbackInfo ci) {
@@ -145,21 +147,20 @@ public abstract class GuiIngameMixin extends Gui {
         
         boolean itemTypeChanged = !betterWithHands$isSameItemType(offhand, this.betterWithHands$lastOffhand);
         if (itemTypeChanged) {
-            this.betterWithHands$prevEquipProgress = 0.0F;
-            this.betterWithHands$equipProgress = 0.0F;
+            this.betterWithHands$animationStartTime = System.currentTimeMillis();
+            this.betterWithHands$animatingIn = offhand != null;
         }
         this.betterWithHands$lastOffhand = offhand != null ? offhand.copy() : null;
         
-        float targetProgress = offhand != null ? 1.0F : 0.0F;
-        this.betterWithHands$prevEquipProgress = this.betterWithHands$equipProgress;
-        float speed = 0.015F;
-        if (this.betterWithHands$equipProgress < targetProgress) {
-            this.betterWithHands$equipProgress = Math.min(this.betterWithHands$equipProgress + speed, targetProgress);
-        } else if (this.betterWithHands$equipProgress > targetProgress) {
-            this.betterWithHands$equipProgress = Math.max(this.betterWithHands$equipProgress - speed, targetProgress);
-        }
+        long elapsed = System.currentTimeMillis() - this.betterWithHands$animationStartTime;
+        float animFraction = Math.min(1.0F, (float) elapsed / EQUIP_ANIMATION_MS);
         
-        float animProgress = this.betterWithHands$prevEquipProgress + (this.betterWithHands$equipProgress - this.betterWithHands$prevEquipProgress) * partialTicks;
+        float animProgress;
+        if (this.betterWithHands$animatingIn) {
+            animProgress = animFraction;
+        } else {
+            animProgress = 1.0F - animFraction;
+        }
 
         BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
         boolean leftHandMode = options.betterWithHands$getLeftHandMode().value;
@@ -220,6 +221,8 @@ public abstract class GuiIngameMixin extends Gui {
         ItemStack offhand = ((OffhandCapable) this.mc.thePlayer.inventory).betterWithHands$getOffhandItem();
         ItemStack mainhand = this.mc.thePlayer.inventory.getCurrentItem();
         
+        boolean dualWieldSwords = com.sajmonoriginal.betterwithhands.util.DynamicPriorityHelper.isDualWieldingSwords(mainhand, offhand);
+        
         boolean offhandActive = false;
         if (offhand != null) {
             if (swapPriority) {
@@ -241,30 +244,38 @@ public abstract class GuiIngameMixin extends Gui {
         int screenWidth = this.mc.resolution.getScaledWidthScreenCoords();
         int screenHeight = this.mc.resolution.getScaledHeightScreenCoords();
         
+        int selectedSlot = this.mc.thePlayer.inventory.getCurrentItemIndex();
+        int hotbarOffset = this.mc.thePlayer.inventory.getHotbarOffset();
+        int relativeSlot = selectedSlot - hotbarOffset;
+        int mainHandSlotX = screenWidth / 2 - 91 + relativeSlot * 20;
+        int mainHandSlotY = screenHeight - 22 - 1;
+        
         if (indicatorType == com.sajmonoriginal.betterwithhands.option.IndicatorType.BORDER) {
             this.mc.textureManager.loadTexture("/assets/betterwithhands/textures/gui/selector.png").bind();
             
-            if (offhandActive && offhandAnimProgress > 0.01F) {
+            if (dualWieldSwords && offhandAnimProgress > 0.01F) {
+                betterWithHands$drawTexturedRect(offhandSlotX - 1, offhandSlotY - 1, 24, 24);
+                betterWithHands$drawTexturedRect(mainHandSlotX, mainHandSlotY, 24, 24);
+            } else if (offhandActive && offhandAnimProgress > 0.01F) {
                 betterWithHands$drawTexturedRect(offhandSlotX - 1, offhandSlotY - 1, 24, 24);
             } else if (!offhandActive) {
-                int selectedSlot = this.mc.thePlayer.inventory.getCurrentItemIndex();
-                int hotbarOffset = this.mc.thePlayer.inventory.getHotbarOffset();
-                int relativeSlot = selectedSlot - hotbarOffset;
-                int selectorX = screenWidth / 2 - 91 + relativeSlot * 20;
-                int selectorY = screenHeight - 22 - 1;
-                betterWithHands$drawTexturedRect(selectorX, selectorY, 24, 24);
+                betterWithHands$drawTexturedRect(mainHandSlotX, mainHandSlotY, 24, 24);
             }
         } else if (indicatorType == com.sajmonoriginal.betterwithhands.option.IndicatorType.DOT) {
             this.mc.textureManager.loadTexture("/assets/betterwithhands/textures/gui/dot.png").bind();
             
-            if (offhandActive && offhandAnimProgress > 0.01F) {
+            if (dualWieldSwords && offhandAnimProgress > 0.01F) {
+                int dotX = offhandSlotX + (SLOT_SIZE / 2) - 2;
+                int dotY = offhandSlotY;
+                betterWithHands$drawTexturedRect(dotX, dotY, 5, 3);
+                int mainDotX = mainHandSlotX + 10;
+                int mainDotY = screenHeight - 22;
+                betterWithHands$drawTexturedRect(mainDotX, mainDotY, 5, 3);
+            } else if (offhandActive && offhandAnimProgress > 0.01F) {
                 int dotX = offhandSlotX + (SLOT_SIZE / 2) - 2;
                 int dotY = offhandSlotY;
                 betterWithHands$drawTexturedRect(dotX, dotY, 5, 3);
             } else if (!offhandActive) {
-                int selectedSlot = this.mc.thePlayer.inventory.getCurrentItemIndex();
-                int hotbarOffset = this.mc.thePlayer.inventory.getHotbarOffset();
-                int relativeSlot = selectedSlot - hotbarOffset;
                 int slotStartX = screenWidth / 2 - 91 + relativeSlot * 20;
                 int dotX = slotStartX + 10;
                 int dotY = screenHeight - 22;
@@ -273,14 +284,18 @@ public abstract class GuiIngameMixin extends Gui {
         } else if (indicatorType == com.sajmonoriginal.betterwithhands.option.IndicatorType.ARROW) {
             this.mc.textureManager.loadTexture("/assets/betterwithhands/textures/gui/priority_indicator.png").bind();
             
-            if (offhandActive && offhandAnimProgress > 0.01F) {
+            if (dualWieldSwords && offhandAnimProgress > 0.01F) {
+                int arrowX = offhandSlotX + (SLOT_SIZE / 2) - 2;
+                int arrowY = offhandSlotY + 2;
+                betterWithHands$drawTexturedRect(arrowX, arrowY, 5, 5);
+                int mainArrowX = mainHandSlotX + 9;
+                int mainArrowY = screenHeight - 22 + 2;
+                betterWithHands$drawTexturedRect(mainArrowX, mainArrowY, 5, 5);
+            } else if (offhandActive && offhandAnimProgress > 0.01F) {
                 int arrowX = offhandSlotX + (SLOT_SIZE / 2) - 2;
                 int arrowY = offhandSlotY + 2;
                 betterWithHands$drawTexturedRect(arrowX, arrowY, 5, 5);
             } else if (!offhandActive) {
-                int selectedSlot = this.mc.thePlayer.inventory.getCurrentItemIndex();
-                int hotbarOffset = this.mc.thePlayer.inventory.getHotbarOffset();
-                int relativeSlot = selectedSlot - hotbarOffset;
                 int slotStartX = screenWidth / 2 - 91 + relativeSlot * 20;
                 int arrowX = slotStartX + 9;
                 int arrowY = screenHeight - 22 + 2;
