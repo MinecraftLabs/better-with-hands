@@ -1,5 +1,6 @@
 package com.sajmonoriginal.betterwithhands.mixin.client;
 
+import com.sajmonoriginal.betterwithhands.BetterWithHandsMod;
 import com.sajmonoriginal.betterwithhands.option.BetterWithHandsOptions;
 import com.sajmonoriginal.betterwithhands.util.DynamicPriorityHelper;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
@@ -11,6 +12,7 @@ import net.minecraft.client.player.controller.PlayerController;
 import net.minecraft.core.block.Block;
 import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
+import net.minecraft.core.net.packet.PacketCustomPayload;
 import net.minecraft.core.util.helper.Side;
 import net.minecraft.core.world.World;
 import org.spongepowered.asm.mixin.Final;
@@ -21,6 +23,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = PlayerController.class, remap = false)
@@ -67,26 +72,38 @@ public abstract class PlayerControllerMixin {
         OffhandCapable inventory = (OffhandCapable) player.inventory;
         int blockId = world.getBlockId(blockX, blockY, blockZ);
         
+        if (player.getHeldObject() != null) {
+            return false;
+        }
+        
+        if ((!player.isSneaking() || offhandStack == null) && blockId > 0 && 
+            net.minecraft.core.block.Blocks.blocksList[blockId].onBlockRightClicked(world, blockX, blockY, blockZ, player, side, xPlaced, yPlaced)) {
+            return true;
+        }
+        if (offhandStack == null) {
+            return false;
+        }
+        
+        if (this.mc.isMultiplayerWorld()) {
+            ((OffhandSwingCapable) player).betterWithHands$swingOffhand();
+            betterWithHands$sendOffhandSwingPacket();
+            betterWithHands$sendUseOffhandPacket(blockX, blockY, blockZ, side, xPlaced, yPlaced);
+            return true;
+        }
+        
         inventory.betterWithHands$setUsingOffhand(true);
         try {
-            if (player.getHeldObject() == null) {
-                if ((!player.isSneaking() || offhandStack == null) && blockId > 0 && 
-                    net.minecraft.core.block.Blocks.blocksList[blockId].onBlockRightClicked(world, blockX, blockY, blockZ, player, side, xPlaced, yPlaced)) {
-                    return true;
-                }
-                if (offhandStack == null) {
-                    return false;
-                }
-                
-                boolean used = offhandStack.useItem(player, world, blockX, blockY, blockZ, side, xPlaced, yPlaced);
-                
-                if (offhandStack.stackSize <= 0) {
-                    inventory.betterWithHands$setOffhandItem(null);
-                }
-                
-                return used;
+            boolean used = offhandStack.useItem(player, world, blockX, blockY, blockZ, side, xPlaced, yPlaced);
+            
+            if (used) {
+                ((OffhandSwingCapable) player).betterWithHands$swingOffhand();
             }
-            return false;
+            
+            if (offhandStack.stackSize <= 0) {
+                inventory.betterWithHands$setOffhandItem(null);
+            }
+            
+            return used;
         } finally {
             inventory.betterWithHands$setUsingOffhand(false);
         }
@@ -128,11 +145,32 @@ public abstract class PlayerControllerMixin {
             return;
         }
 
+        ItemStack mainHand = this.mc.thePlayer.inventory.getCurrentItem();
+        ItemStack offHand = ((OffhandCapable) this.mc.thePlayer.inventory).betterWithHands$getOffhandItem();
+        
+        if (DynamicPriorityHelper.isDualWieldingSwords(mainHand, offHand)) {
+            boolean rightMouseDown = org.lwjgl.input.Mouse.isButtonDown(1);
+            if (rightMouseDown) {
+                return;
+            }
+            if (this.swingCooldown == 0 || force) {
+                ((OffhandSwingCapable) this.mc.thePlayer).betterWithHands$swingOffhand();
+                if (this.mc.isMultiplayerWorld()) {
+                    betterWithHands$sendOffhandSwingPacket();
+                }
+                this.swingCooldown = 5;
+                cir.setReturnValue(true);
+            } else {
+                cir.setReturnValue(false);
+            }
+            return;
+        }
+
         boolean useOffhand;
         boolean rightMouseDown = org.lwjgl.input.Mouse.isButtonDown(1);
         
         if (rightMouseDown) {
-            useOffhand = shouldUseOffhandForUse(this.mc.thePlayer.inventory.getCurrentItem());
+            useOffhand = shouldUseOffhandForUse(mainHand);
         } else {
             useOffhand = shouldUseOffhandForMining();
         }
@@ -140,6 +178,9 @@ public abstract class PlayerControllerMixin {
         if (useOffhand) {
             if (this.swingCooldown == 0 || force) {
                 ((OffhandSwingCapable) this.mc.thePlayer).betterWithHands$swingOffhand();
+                if (this.mc.isMultiplayerWorld()) {
+                    betterWithHands$sendOffhandSwingPacket();
+                }
                 this.swingCooldown = 5;
                 cir.setReturnValue(true);
             } else {
@@ -230,4 +271,37 @@ public abstract class PlayerControllerMixin {
         return false;
     }
 
+    @Unique
+    private void betterWithHands$sendOffhandSwingPacket() {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeByte(3);
+            
+            PacketCustomPayload packet = new PacketCustomPayload(BetterWithHandsMod.MOD_ID, baos.toByteArray());
+            this.mc.getSendQueue().addToSendQueue(packet);
+        } catch (Exception e) {
+            BetterWithHandsMod.LOGGER.error("Failed to send offhand swing packet", e);
+        }
+    }
+
+    @Unique
+    private void betterWithHands$sendUseOffhandPacket(int blockX, int blockY, int blockZ, Side side, double xPlaced, double yPlaced) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeByte(4);
+            dos.writeInt(blockX);
+            dos.writeInt(blockY);
+            dos.writeInt(blockZ);
+            dos.writeInt(side.getId());
+            dos.writeDouble(xPlaced);
+            dos.writeDouble(yPlaced);
+            
+            PacketCustomPayload packet = new PacketCustomPayload(BetterWithHandsMod.MOD_ID, baos.toByteArray());
+            this.mc.getSendQueue().addToSendQueue(packet);
+        } catch (Exception e) {
+            BetterWithHandsMod.LOGGER.error("Failed to send use offhand packet", e);
+        }
+    }
 }

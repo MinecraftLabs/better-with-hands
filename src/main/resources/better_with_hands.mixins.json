@@ -19,10 +19,13 @@
 		"client.MinecraftMixin",
 		"client.MobRendererPlayerMixin",
 		"client.ModelBipedMixin",
+		"client.PacketHandlerClientMixin",
 		"client.PlayerControllerMixin"
 	],
 	"server": [
+		"EntityTrackerEntryMixin",
 		"NetServerHandlerMixin",
-		"PacketHandlerServerMixin"
+		"PacketHandlerServerMixin",
+		"PlayerServerMixin"
 	]
 }
