@@ -15,6 +15,13 @@ public class DynamicPriorityHelper {
         USE
     }
 
+    public static boolean isDualWieldingSwords(ItemStack mainHand, ItemStack offHand) {
+        if (mainHand == null || offHand == null) {
+            return false;
+        }
+        return mainHand.getItem() instanceof ItemToolSword && offHand.getItem() instanceof ItemToolSword;
+    }
+
     public static boolean shouldUseOffhandForAction(ItemStack mainHand, ItemStack offHand, ActionType action, Object context) {
         if (offHand == null) {
             return false;

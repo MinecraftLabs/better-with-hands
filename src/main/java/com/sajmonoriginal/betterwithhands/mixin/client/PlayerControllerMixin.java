@@ -207,6 +207,10 @@ public abstract class PlayerControllerMixin {
 
         ItemStack mainHand = this.mc.thePlayer.inventory.getCurrentItem();
         
+        if (DynamicPriorityHelper.isDualWieldingSwords(mainHand, offhand)) {
+            return true;
+        }
+        
         BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
         boolean dynamicPriority = options.betterWithHands$getDynamicHandPriority().value;
         

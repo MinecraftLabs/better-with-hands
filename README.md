@@ -107,6 +107,10 @@ Switch between materials with X instead of scrolling through your hotbar.
 Main hand: Pickaxe | Offhand: Axe  
 Mine stone with pickaxe, approach a tree and it automatically switches to axe.
 
+**Dual-Wield Swords**  
+Main hand: Sword | Offhand: Sword  
+Left click attacks with offhand, right click attacks with main hand. Channel your inner Kirito.
+
 ## Additional Details
 
 - **Item Pickup:** When your inventory is full, stackable items can go directly into your offhand if there's a matching stack
