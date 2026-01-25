@@ -1,5 +1,6 @@
 package com.sajmonoriginal.betterwithhands.mixin.client;
 
+import com.sajmonoriginal.betterwithhands.util.DualWieldHelper;
 import com.sajmonoriginal.betterwithhands.util.DynamicPriorityHelper;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import net.fabricmc.api.EnvType;
@@ -19,11 +20,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MinecraftMixin {
 
     @Inject(method = "clickMouse", at = @At("HEAD"), cancellable = true)
-    private void onRightClickWithDualSwords(int button, boolean state, boolean hitBlock, CallbackInfo ci) {
+    private void onClickWithDualSwords(int button, boolean state, boolean hitBlock, CallbackInfo ci) {
         Minecraft mc = Minecraft.getMinecraft();
         Player player = mc.thePlayer;
         
-        if (button != 1 || !state || player == null) {
+        if (!state || player == null) {
             return;
         }
         
@@ -34,14 +35,18 @@ public abstract class MinecraftMixin {
             return;
         }
         
-        HitResult hit = mc.objectMouseOver;
-        if (hit != null && hit.hitType == HitResult.HitType.ENTITY) {
-            Entity target = hit.entity;
-            if (target != null) {
-                player.attackTargetEntityWithCurrentItem(target);
-                mc.playerController.swingItem(false);
-                ci.cancel();
+        if (button == 0) {
+            HitResult hit = mc.objectMouseOver;
+            if (hit != null && hit.hitType == HitResult.HitType.ENTITY && hit.entity != null) {
+                DualWieldHelper.setUseOffhandForAttack(true);
             }
+        } else if (button == 1) {
+            HitResult hit = mc.objectMouseOver;
+            if (hit != null && hit.hitType == HitResult.HitType.ENTITY && hit.entity != null) {
+                player.attackTargetEntityWithCurrentItem(hit.entity);
+            }
+            mc.playerController.swingItem(false);
+            ci.cancel();
         }
     }
 }

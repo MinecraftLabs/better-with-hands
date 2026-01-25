@@ -1,8 +1,10 @@
 package com.sajmonoriginal.betterwithhands.mixin;
 
+import com.sajmonoriginal.betterwithhands.util.DualWieldHelper;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import com.sajmonoriginal.betterwithhands.util.OffhandLogicHelper;
 import com.sajmonoriginal.betterwithhands.util.OffhandSwingCapable;
+import net.minecraft.core.entity.Entity;
 import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
 import net.minecraft.core.player.inventory.container.ContainerInventory;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = Player.class, remap = false)
 public abstract class EntityPlayerMixin implements OffhandSwingCapable {
@@ -74,6 +77,21 @@ public abstract class EntityPlayerMixin implements OffhandSwingCapable {
     @Shadow
     public abstract void dropPlayerItemWithRandomChoice(ItemStack itemStack, boolean randomChoice);
 
+    @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
+    private void onAttackStart(Entity target, CallbackInfo ci) {
+        if (DualWieldHelper.shouldUseOffhandForAttack()) {
+            ((OffhandCapable) this.inventory).betterWithHands$swapHands();
+        }
+    }
+
+    @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("RETURN"))
+    private void onAttackEnd(Entity target, CallbackInfo ci) {
+        if (DualWieldHelper.shouldUseOffhandForAttack()) {
+            ((OffhandCapable) this.inventory).betterWithHands$swapHands();
+            DualWieldHelper.clearUseOffhandForAttack();
+        }
+    }
+
     @Inject(method = "dropCurrentItem", at = @At("HEAD"), cancellable = true)
     private void onDropCurrentItem(boolean dropFullStack, CallbackInfo ci) {
         OffhandCapable offhandInventory = (OffhandCapable) this.inventory;
@@ -94,6 +112,14 @@ public abstract class EntityPlayerMixin implements OffhandSwingCapable {
                 this.dropPlayerItemWithRandomChoice(toDrop, false);
             }
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "getCurrentEquippedItem", at = @At("HEAD"), cancellable = true)
+    private void onGetCurrentEquippedItem(CallbackInfoReturnable<ItemStack> cir) {
+        OffhandCapable offhandInventory = (OffhandCapable) this.inventory;
+        if (offhandInventory.betterWithHands$isUsingOffhand()) {
+            cir.setReturnValue(offhandInventory.betterWithHands$getOffhandItem());
         }
     }
 }
