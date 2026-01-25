@@ -42,9 +42,13 @@ public abstract class ItemRendererMixin {
     @Unique
     private int betterWithHands$lastOffhandItemMeta = -1;
     @Unique
-    private float betterWithHands$offhandEquipProgress = 1.0F;
+    private long betterWithHands$animationStartTime = 0L;
     @Unique
-    private float betterWithHands$offhandPrevEquipProgress = 1.0F;
+    private static final long EQUIP_ANIMATION_MS = 300L;
+    @Unique
+    private ItemStack betterWithHands$lastRenderedOffhand = null;
+    @Unique
+    private boolean betterWithHands$animatingIn = false;
 
     @Inject(method = "renderItemInFirstPerson", at = @At("HEAD"), cancellable = true)
     private void renderWithLeftHandMode(float partialTicks, CallbackInfo ci) {
@@ -109,25 +113,31 @@ public abstract class ItemRendererMixin {
                                    currentItemMeta != this.betterWithHands$lastOffhandItemMeta;
         
         if (itemTypeChanged) {
-            this.betterWithHands$offhandPrevEquipProgress = 0.0F;
-            this.betterWithHands$offhandEquipProgress = 0.0F;
+            this.betterWithHands$animationStartTime = System.currentTimeMillis();
             this.betterWithHands$lastOffhandItemId = currentItemId;
             this.betterWithHands$lastOffhandItemMeta = currentItemMeta;
+            this.betterWithHands$animatingIn = offhand != null;
+            if (offhand != null) {
+                this.betterWithHands$lastRenderedOffhand = offhand.copy();
+            }
         }
         
-        float targetProgress = offhand != null ? 1.0F : 0.0F;
-        this.betterWithHands$offhandPrevEquipProgress = this.betterWithHands$offhandEquipProgress;
-        float speed = 0.4F;
-        if (this.betterWithHands$offhandEquipProgress < targetProgress) {
-            this.betterWithHands$offhandEquipProgress = Math.min(this.betterWithHands$offhandEquipProgress + speed, targetProgress);
-        } else if (this.betterWithHands$offhandEquipProgress > targetProgress) {
-            this.betterWithHands$offhandEquipProgress = Math.max(this.betterWithHands$offhandEquipProgress - speed, targetProgress);
+        long elapsed = System.currentTimeMillis() - this.betterWithHands$animationStartTime;
+        float animFraction = Math.min(1.0F, (float) elapsed / EQUIP_ANIMATION_MS);
+        
+        float equipProgress;
+        if (this.betterWithHands$animatingIn) {
+            equipProgress = animFraction;
+        } else {
+            equipProgress = 1.0F - animFraction;
         }
         
-        float equipProgress = this.betterWithHands$offhandPrevEquipProgress + 
-            (this.betterWithHands$offhandEquipProgress - this.betterWithHands$offhandPrevEquipProgress) * partialTicks;
+        ItemStack itemToShow = offhand != null ? offhand : this.betterWithHands$lastRenderedOffhand;
         
-        if (equipProgress <= 0.01F || offhand == null) {
+        if (equipProgress <= 0.01F || itemToShow == null) {
+            if (offhand == null) {
+                this.betterWithHands$lastRenderedOffhand = null;
+            }
             return;
         }
 
@@ -140,7 +150,7 @@ public abstract class ItemRendererMixin {
         
         float offhandSwing = ((OffhandSwingCapable) this.mc.thePlayer).betterWithHands$getOffhandSwingProgress(partialTicks);
 
-        this.itemToRender = offhand;
+        this.itemToRender = itemToShow;
         this.height = equipProgress;
         this.oHeight = equipProgress;
         this.mc.thePlayer.swingProgress = offhandSwing;
@@ -169,5 +179,9 @@ public abstract class ItemRendererMixin {
         this.oHeight = savedOHeight;
         this.mc.thePlayer.swingProgress = savedSwingProgress;
         this.mc.thePlayer.prevSwingProgress = savedPrevSwingProgress;
+        
+        if (offhand == null && equipProgress <= 0.01F) {
+            this.betterWithHands$lastRenderedOffhand = null;
+        }
     }
 }
