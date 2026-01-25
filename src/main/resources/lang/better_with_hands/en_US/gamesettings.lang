@@ -1,0 +1,16 @@
+gui.options.page.betterwithhands.title=Better With Hands
+gui.options.page.betterwithhands.category.behavior=Offhand Behavior
+gui.options.page.betterwithhands.category.display=Display
+gui.options.page.betterwithhands.category.controls=Controls
+options.betterWithHands.useOffhandWhenMainEmpty=Use Offhand When Main Empty
+options.betterWithHands.swapHandPriority=Swap Hand Priority
+options.betterWithHands.dynamicHandPriority=Dynamic Hand Priority (Experimental)
+options.betterWithHands.indicatorType=Indicator Type
+options.betterWithHands.indicatorType.border=Border
+options.betterWithHands.indicatorType.dot=Dot
+options.betterWithHands.indicatorType.arrow=Arrow
+options.betterWithHands.indicatorType.none=None
+options.betterWithHands.showIndicatorOnlyWithOffhand=Show Indicator Only With Offhand
+options.betterWithHands.leftHandMode=Left Hand Mode
+key.betterWithHands.swapHands=Swap Hands
+key.betterWithHands.swapPriority=Toggle Hand Priority
