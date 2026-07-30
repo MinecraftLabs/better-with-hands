@@ -19,9 +19,6 @@
 		],
 		"client": [
 			"com.sajmonoriginal.betterwithhands.BetterWithHandsClientMod"
-		],
-		"afterClientStart": [
-			"com.sajmonoriginal.betterwithhands.BetterWithHandsClientMod"
 		]
 	},
 	"mixins": [

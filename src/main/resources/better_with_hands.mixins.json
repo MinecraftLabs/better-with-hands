@@ -12,7 +12,6 @@
 		"accessor.MenuAbstractAccessor"
 	],
 	"client": [
-		"client.GameSettingsMixin",
 		"client.GuiIngameMixin",
 		"client.GuiInventoryMixin",
 		"client.ItemRendererMixin",

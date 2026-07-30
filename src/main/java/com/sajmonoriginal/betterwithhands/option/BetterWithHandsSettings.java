@@ -2,7 +2,6 @@ package com.sajmonoriginal.betterwithhands.option;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.options.components.KeyBindingComponent;
 import net.minecraft.client.gui.options.components.OptionsCategory;
 import net.minecraft.client.gui.options.components.ToggleableOptionComponent;
@@ -26,27 +25,25 @@ public class BetterWithHandsSettings {
     }
 
     public static void registerSettings() {
-        BetterWithHandsOptions options = (BetterWithHandsOptions) Minecraft.getMinecraft().gameSettings;
-
         OptionsPage page = new OptionsPage(
-            "gui.options.page.betterwithhands.title",
+            "gui.options.page.better_with_hands.title",
             new ItemStack(Items.LEATHER)
         ).withComponent(
-            new OptionsCategory("gui.options.page.betterwithhands.category.behavior")
-                .withComponent(new ToggleableOptionComponent<>(options.betterWithHands$getUseOffhandWhenMainEmpty()))
-                .withComponent(new ToggleableOptionComponent<>(options.betterWithHands$getSwapHandPriority()))
-                .withComponent(new ToggleableOptionComponent<>(options.betterWithHands$getDynamicHandPriority()))
+            new OptionsCategory("gui.options.page.better_with_hands.category.behavior")
+                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.USE_OFFHAND_WHEN_MAIN_EMPTY))
+                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.SWAP_HAND_PRIORITY))
+                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.DYNAMIC_HAND_PRIORITY))
         ).withComponent(
-            new OptionsCategory("gui.options.page.betterwithhands.category.display")
-                .withComponent(new ToggleableOptionComponent<>(options.betterWithHands$getLeftHandMode()))
-                .withComponent(new ToggleableOptionComponent<>(options.betterWithHands$getIndicatorType()))
-                .withComponent(new ToggleableOptionComponent<>(options.betterWithHands$getShowIndicatorOnlyWithOffhand()))
+            new OptionsCategory("gui.options.page.better_with_hands.category.display")
+                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.LEFT_HAND_MODE))
+                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.INDICATOR_TYPE))
+                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.SHOW_INDICATOR_ONLY_WITH_OFFHAND))
         ).withComponent(
-            new OptionsCategory("gui.options.page.betterwithhands.category.controls")
-                .withComponent(new KeyBindingComponent(options.betterWithHands$getKeySwapHands()))
-                .withComponent(new KeyBindingComponent(options.betterWithHands$getKeySwapPriority()))
+            new OptionsCategory("gui.options.page.better_with_hands.category.controls")
+                .withComponent(new KeyBindingComponent(BetterWithHandsOptions.KEY_SWAP_HANDS))
+                .withComponent(new KeyBindingComponent(BetterWithHandsOptions.KEY_SWAP_PRIORITY))
         );
-        
+
         OptionsPages.register(page);
     }
 }
