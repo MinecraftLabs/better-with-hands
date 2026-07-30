@@ -13,6 +13,7 @@
 	],
 	"client": [
 		"client.GuiIngameMixin",
+		"client.GuiInventoryCreativeMixin",
 		"client.GuiInventoryMixin",
 		"client.ItemRendererMixin",
 		"client.MinecraftMixin",
