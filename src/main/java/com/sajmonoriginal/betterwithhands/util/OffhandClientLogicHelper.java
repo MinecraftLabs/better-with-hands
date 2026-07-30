@@ -12,20 +12,19 @@ public class OffhandClientLogicHelper {
 
     public static boolean shouldUseOffhandClientForBlock(ItemStack mainHand, ItemStack offHand, Block<?> block) {
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc == null || mc.gameSettings == null) {
+        if (mc == null) {
             return mainHand == null;
         }
 
-        BetterWithHandsOptions options = (BetterWithHandsOptions) mc.gameSettings;
-        boolean dynamicPriority = options.betterWithHands$getDynamicHandPriority().value;
-        
+        boolean dynamicPriority = BetterWithHandsOptions.DYNAMIC_HAND_PRIORITY.value;
+
         if (dynamicPriority && block != null && offHand != null) {
             return DynamicPriorityHelper.shouldUseOffhandForAction(
                 mainHand, offHand, DynamicPriorityHelper.ActionType.MINING, block);
         }
 
-        boolean swapPriority = options.betterWithHands$getSwapHandPriority().value;
-        boolean useWhenEmpty = options.betterWithHands$getUseOffhandWhenMainEmpty().value;
+        boolean swapPriority = BetterWithHandsOptions.SWAP_HAND_PRIORITY.value;
+        boolean useWhenEmpty = BetterWithHandsOptions.USE_OFFHAND_WHEN_MAIN_EMPTY.value;
 
         if (swapPriority) {
             return true;

@@ -7,8 +7,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.ItemRenderer;
+import net.minecraft.client.render.renderer.CullFace;
+import net.minecraft.client.render.renderer.GLRenderer;
 import net.minecraft.core.item.ItemStack;
-import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,7 +37,7 @@ public abstract class ItemRendererMixin {
 
     @Unique
     private boolean betterWithHands$renderingSecondHand = false;
-    
+
     @Unique
     private int betterWithHands$lastOffhandItemId = -1;
     @Unique
@@ -60,25 +61,21 @@ public abstract class ItemRendererMixin {
             return;
         }
 
-        BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
-        boolean leftHandMode = options.betterWithHands$getLeftHandMode().value;
+        boolean leftHandMode = BetterWithHandsOptions.LEFT_HAND_MODE.value;
 
         if (leftHandMode) {
             ci.cancel();
-            
-            GL11.glPushMatrix();
-            GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_LIGHTING_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
 
-            GL11.glCullFace(GL11.GL_FRONT);
-            GL11.glScalef(-1.0F, 1.0F, 1.0F);
+            GLRenderer.pushFrame();
+
+            GLRenderer.setCullFace(CullFace.FRONT);
+            GLRenderer.modelM4f().scale(-1.0F, 1.0F, 1.0F);
 
             this.betterWithHands$renderingSecondHand = true;
             this.renderItemInFirstPerson(partialTicks);
             this.betterWithHands$renderingSecondHand = false;
 
-            GL11.glPopAttrib();
-            GL11.glCullFace(GL11.GL_BACK);
-            GL11.glPopMatrix();
+            GLRenderer.popFrame();
 
             betterWithHands$renderOffhand(partialTicks, true);
         }
@@ -94,8 +91,7 @@ public abstract class ItemRendererMixin {
             return;
         }
 
-        BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
-        boolean leftHandMode = options.betterWithHands$getLeftHandMode().value;
+        boolean leftHandMode = BetterWithHandsOptions.LEFT_HAND_MODE.value;
 
         if (!leftHandMode) {
             betterWithHands$renderOffhand(partialTicks, false);
@@ -105,13 +101,13 @@ public abstract class ItemRendererMixin {
     @Unique
     private void betterWithHands$renderOffhand(float partialTicks, boolean leftHandMode) {
         ItemStack offhand = ((OffhandCapable) this.mc.thePlayer.inventory).betterWithHands$getOffhandItem();
-        
+
         int currentItemId = offhand != null ? offhand.itemID : -1;
         int currentItemMeta = offhand != null ? offhand.getMetadata() : -1;
-        
-        boolean itemTypeChanged = currentItemId != this.betterWithHands$lastOffhandItemId || 
+
+        boolean itemTypeChanged = currentItemId != this.betterWithHands$lastOffhandItemId ||
                                    currentItemMeta != this.betterWithHands$lastOffhandItemMeta;
-        
+
         if (itemTypeChanged) {
             this.betterWithHands$animationStartTime = System.currentTimeMillis();
             this.betterWithHands$lastOffhandItemId = currentItemId;
@@ -121,19 +117,19 @@ public abstract class ItemRendererMixin {
                 this.betterWithHands$lastRenderedOffhand = offhand.copy();
             }
         }
-        
+
         long elapsed = System.currentTimeMillis() - this.betterWithHands$animationStartTime;
         float animFraction = Math.min(1.0F, (float) elapsed / EQUIP_ANIMATION_MS);
-        
+
         float equipProgress;
         if (this.betterWithHands$animatingIn) {
             equipProgress = animFraction;
         } else {
             equipProgress = 1.0F - animFraction;
         }
-        
+
         ItemStack itemToShow = offhand != null ? offhand : this.betterWithHands$lastRenderedOffhand;
-        
+
         if (equipProgress <= 0.01F || itemToShow == null) {
             if (offhand == null) {
                 this.betterWithHands$lastRenderedOffhand = null;
@@ -144,10 +140,10 @@ public abstract class ItemRendererMixin {
         ItemStack savedItem = this.itemToRender;
         float savedHeight = this.height;
         float savedOHeight = this.oHeight;
-        
+
         float savedSwingProgress = this.mc.thePlayer.swingProgress;
         float savedPrevSwingProgress = this.mc.thePlayer.prevSwingProgress;
-        
+
         float offhandSwing = ((OffhandSwingCapable) this.mc.thePlayer).betterWithHands$getOffhandSwingProgress(partialTicks);
 
         this.itemToRender = itemToShow;
@@ -156,30 +152,25 @@ public abstract class ItemRendererMixin {
         this.mc.thePlayer.swingProgress = offhandSwing;
         this.mc.thePlayer.prevSwingProgress = offhandSwing;
 
-        GL11.glPushMatrix();
-        GL11.glPushAttrib(GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_LIGHTING_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
+        GLRenderer.pushFrame();
 
         if (!leftHandMode) {
-            GL11.glCullFace(GL11.GL_FRONT);
-            GL11.glScalef(-1.0F, 1.0F, 1.0F);
+            GLRenderer.setCullFace(CullFace.FRONT);
+            GLRenderer.modelM4f().scale(-1.0F, 1.0F, 1.0F);
         }
 
         this.betterWithHands$renderingSecondHand = true;
         this.renderItemInFirstPerson(partialTicks);
         this.betterWithHands$renderingSecondHand = false;
 
-        GL11.glPopAttrib();
-        if (!leftHandMode) {
-            GL11.glCullFace(GL11.GL_BACK);
-        }
-        GL11.glPopMatrix();
+        GLRenderer.popFrame();
 
         this.itemToRender = savedItem;
         this.height = savedHeight;
         this.oHeight = savedOHeight;
         this.mc.thePlayer.swingProgress = savedSwingProgress;
         this.mc.thePlayer.prevSwingProgress = savedPrevSwingProgress;
-        
+
         if (offhand == null && equipProgress <= 0.01F) {
             this.betterWithHands$lastRenderedOffhand = null;
         }
