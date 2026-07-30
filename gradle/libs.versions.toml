@@ -1,41 +1,44 @@
 [versions]
 ##########################################################################
 # Plugins
-loom = "1.14-SNAPSHOT"
-lwjglPlugin = "1.0.1"
+loom = "1.15-SNAPSHOT"
 ##########################################################################
 # Java Configuration
-java = "8"
+java = "17"
 gradleJava = "21"
 ##########################################################################
 # Mod Dependencies
-bta = "7.3_04"
+bta = "8.0.1"
 btaChannel = "release"
-loader = "0.18.4-bta.10"
+loader = "0.18.4-bta.11"
+modMenu = "5.0.2"
+halplibe = "6.1.4+8.0"
 legacyLwjgl = "1.0.6"
-halplibe = "5.3.3"
 ##########################################################################
 # Dependencies
 slf4jApi = "2.0.17"
-guava = "33.5.0-jre"
-log4j = "2.20.0"
-gson = "2.13.2"
 lwjgl = "3.3.3"
+joml = "1.10.8"
+jomlPrimitives = "1.10.0"
 ##########################################################################
 
 [libraries]
 loader = { group = "net.fabricmc", name = "fabric-loader", version.ref = "loader" }
-legacyLwjgl = { group = "com.github.Better-than-Adventure", name = "legacy-lwjgl3", version.ref = "legacyLwjgl" }
 halplibe = { group = "turniplabs", name = "halplibe", version.ref = "halplibe" }
+modMenu = { group = "turniplabs", name = "modmenu-bta", version.ref = "modMenu" }
+legacyLwjgl = { group = "com.github.Better-than-Adventure", name = "legacy-lwjgl3", version.ref = "legacyLwjgl" }
 slf4jApi = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4jApi" }
-guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
-log4j-slf4j2-impl = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
-log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
-log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j" }
-log4j-api12 = { group = "org.apache.logging.log4j", name = "log4j-1.2-api", version.ref = "log4j" }
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 clientJar = { group = "objects", name = "client", version = "43db9b498cb67058d2e12d394e6507722e71bb45" }
+joml = { group = "org.joml", name = "joml", version.ref = "joml" }
+joml-primitives = { group = "org.joml", name = "joml-primitives", version.ref = "jomlPrimitives" }
+lwjgl = { group = "org.lwjgl", name = "lwjgl", version.ref = "lwjgl"}
+lwjgl-glfw = { group = "org.lwjgl", name = "lwjgl-glfw", version.ref = "lwjgl"}
+lwjgl-openal = { group = "org.lwjgl", name = "lwjgl-openal", version.ref = "lwjgl"}
+lwjgl-opengl = { group = "org.lwjgl", name = "lwjgl-opengl", version.ref = "lwjgl"}
+lwjgl-stb = { group = "org.lwjgl", name = "lwjgl-stb", version.ref = "lwjgl"}
+
+[bundles]
+btaLwjgl = [ "lwjgl", "lwjgl-glfw", "lwjgl-openal", "lwjgl-opengl", "lwjgl-stb", "legacyLwjgl" ]
 
 [plugins]
 loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }
-lwjgl = { id = "com.smushytaco.lwjgl3", version.ref = "lwjglPlugin" }
