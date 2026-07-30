@@ -15,8 +15,8 @@ public abstract class MenuInventoryMixin {
     @Shadow
     public ContainerInventory inventory;
 
-    @Inject(method = "<init>(Lnet/minecraft/core/player/inventory/container/ContainerInventory;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/player/inventory/menu/MenuInventory;slotsChanged(Lnet/minecraft/core/player/inventory/container/Container;)V"))
-    private void addOffhandSlot(ContainerInventory inventory, boolean active, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/core/player/inventory/container/ContainerInventory;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/player/inventory/menu/MenuInventory;slotsChanged(Lnet/minecraft/core/player/inventory/container/Container;)V"))
+    private void addOffhandSlot(ContainerInventory inventory, CallbackInfo ci) {
         MenuInventory menu = (MenuInventory) (Object) this;
         ((MenuAbstractAccessor) menu).invokeAddSlot(new SlotOffhand(inventory, 152, 62));
     }

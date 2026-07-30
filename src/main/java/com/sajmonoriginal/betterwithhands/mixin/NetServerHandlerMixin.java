@@ -33,7 +33,7 @@ public class NetServerHandlerMixin {
             try {
                 DataInputStream dis = new DataInputStream(new ByteArrayInputStream(packet.data));
                 byte action = dis.readByte();
-                
+
                 if (action == 0) {
                     ((OffhandCapable) this.playerEntity.inventory).betterWithHands$swapHands();
                 } else if (action == 1) {
@@ -54,10 +54,10 @@ public class NetServerHandlerMixin {
                     int sideId = dis.readInt();
                     double xPlaced = dis.readDouble();
                     double yPlaced = dis.readDouble();
-                    
-                    handleUseOffhand(blockX, blockY, blockZ, Side.getSideById(sideId), xPlaced, yPlaced);
+
+                    handleUseOffhand(blockX, blockY, blockZ, Side.fromId(sideId), xPlaced, yPlaced);
                 }
-                
+
                 ci.cancel();
             } catch (Exception e) {
                 BetterWithHandsMod.LOGGER.error("Error handling offhand packet", e);
@@ -71,9 +71,9 @@ public class NetServerHandlerMixin {
             DataOutputStream dos = new DataOutputStream(baos);
             dos.writeByte(3);
             dos.writeInt(this.playerEntity.id);
-            
+
             PacketCustomPayload swingPacket = new PacketCustomPayload(BetterWithHandsMod.MOD_ID, baos.toByteArray());
-            
+
             MinecraftServer server = MinecraftServer.getInstance();
             if (server != null && server.playerList != null) {
                 server.playerList.sendPacketToOtherPlayersAroundPoint(
@@ -92,17 +92,17 @@ public class NetServerHandlerMixin {
     private void handleUseOffhand(int blockX, int blockY, int blockZ, Side side, double xPlaced, double yPlaced) {
         OffhandCapable offhandInventory = (OffhandCapable) this.playerEntity.inventory;
         ItemStack offhand = offhandInventory.betterWithHands$getOffhandItem();
-        
+
         if (offhand == null) {
             return;
         }
-        
+
         World world = this.playerEntity.world;
-        
+
         offhandInventory.betterWithHands$setUsingOffhand(true);
         try {
             boolean used = offhand.useItem(this.playerEntity, world, blockX, blockY, blockZ, side, xPlaced, yPlaced);
-            
+
             if (used) {
                 if (offhand.stackSize <= 0) {
                     offhandInventory.betterWithHands$setOffhandItem(null);

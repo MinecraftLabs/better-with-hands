@@ -3,8 +3,6 @@ package com.sajmonoriginal.betterwithhands.mixin;
 import com.mojang.nbt.tags.CompoundTag;
 import com.mojang.nbt.tags.ListTag;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
-import com.sajmonoriginal.betterwithhands.util.OffhandLogicHelper;
-import net.minecraft.core.block.Block;
 import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
 import net.minecraft.core.player.inventory.container.ContainerInventory;
@@ -28,7 +26,7 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
     public ItemStack[] armorInventory;
 
     @Shadow
-    public abstract int getCurrentItemIndex();
+    public abstract int getCurrentSlot();
 
     @Unique
     private ItemStack offhandItem = null;
@@ -57,7 +55,7 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
 
     @Override
     public void betterWithHands$swapHands() {
-        int currentSlot = this.getCurrentItemIndex();
+        int currentSlot = this.getCurrentSlot();
         ItemStack mainHand = this.mainInventory[currentSlot];
         this.mainInventory[currentSlot] = this.offhandItem;
         this.offhandItem = mainHand;
@@ -103,45 +101,12 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
         this.dynamicPriority = dynamicPriority;
     }
 
-    @Inject(method = "getStrVsBlock", at = @At("HEAD"), cancellable = true)
-    private void onGetStrVsBlock(Block<?> block, CallbackInfoReturnable<Float> cir) {
-        int currentSlot = this.getCurrentItemIndex();
-        ItemStack mainHand = this.mainInventory[currentSlot];
-
-        boolean useOffhand = OffhandLogicHelper.shouldUseOffhandForBlock(mainHand, this.offhandItem, this, block);
-
-        if (useOffhand) {
-            float strength = this.offhandItem.getStrVsBlock(block);
-            cir.setReturnValue(strength);
-        }
-    }
-
-    @Inject(method = "canHarvestBlock", at = @At("HEAD"), cancellable = true)
-    private void onCanHarvestBlock(Block<?> block, CallbackInfoReturnable<Boolean> cir) {
-        if (block == null) {
-            return;
-        }
-
-        int currentSlot = this.getCurrentItemIndex();
-        ItemStack mainHand = this.mainInventory[currentSlot];
-
-        boolean useOffhand = OffhandLogicHelper.shouldUseOffhandForBlock(mainHand, this.offhandItem, this, block);
-
-        if (useOffhand) {
-            if (block.getMaterial().isAlwaysDestroyable()) {
-                cir.setReturnValue(true);
-                return;
-            }
-            cir.setReturnValue(this.offhandItem.canHarvestBlock(this.player, block));
-        }
-    }
-
     @Inject(method = "insertItem", at = @At("TAIL"))
     private void tryInsertIntoOffhand(ItemStack stackToAdd, boolean useHotbarOffset, CallbackInfo ci) {
         if (stackToAdd == null || stackToAdd.stackSize <= 0) {
             return;
         }
-        
+
         if (this.offhandItem != null && this.offhandItem.canStackWith(stackToAdd)) {
             int maxStack = Math.min(this.offhandItem.getMaxStackSize(), stackToAdd.getMaxStackSize());
             int canAdd = maxStack - this.offhandItem.stackSize;
@@ -169,7 +134,7 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
         }
     }
 
-    @Inject(method = "writeToNBT", at = @At("TAIL"))
+    @Inject(method = "save", at = @At("TAIL"))
     private void saveOffhandToNBT(ListTag listTag, CallbackInfoReturnable<ListTag> cir) {
         if (this.offhandItem != null) {
             CompoundTag offhandTag = new CompoundTag();
@@ -179,7 +144,7 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
         }
     }
 
-    @Inject(method = "readFromNBT", at = @At("TAIL"))
+    @Inject(method = "load", at = @At("TAIL"))
     private void loadOffhandFromNBT(ListTag listTag, CallbackInfo ci) {
         for (int i = 0; i < listTag.tagCount(); i++) {
             CompoundTag tag = (CompoundTag) listTag.tagAt(i);

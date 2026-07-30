@@ -6,7 +6,6 @@ import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.entity.Entity;
 import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
 import net.minecraft.core.util.phys.HitResult;
@@ -23,27 +22,25 @@ public abstract class MinecraftMixin {
     private void onClickWithDualSwords(int button, boolean state, boolean hitBlock, CallbackInfo ci) {
         Minecraft mc = Minecraft.getMinecraft();
         Player player = mc.thePlayer;
-        
+
         if (!state || player == null) {
             return;
         }
-        
+
         ItemStack mainHand = player.inventory.getCurrentItem();
         ItemStack offHand = ((OffhandCapable) player.inventory).betterWithHands$getOffhandItem();
-        
+
         if (!DynamicPriorityHelper.isDualWieldingSwords(mainHand, offHand)) {
             return;
         }
-        
+
         if (button == 0) {
-            HitResult hit = mc.objectMouseOver;
-            if (hit != null && hit.hitType == HitResult.HitType.ENTITY && hit.entity != null) {
+            if (mc.objectMouseOver instanceof HitResult.Entity) {
                 DualWieldHelper.setUseOffhandForAttack(true);
             }
         } else if (button == 1) {
-            HitResult hit = mc.objectMouseOver;
-            if (hit != null && hit.hitType == HitResult.HitType.ENTITY && hit.entity != null) {
-                player.attackTargetEntityWithCurrentItem(hit.entity);
+            if (mc.objectMouseOver instanceof HitResult.Entity entityHit) {
+                player.attackTargetEntityWithCurrentItem(entityHit.entity);
             }
             mc.playerController.swingItem(false);
             ci.cancel();

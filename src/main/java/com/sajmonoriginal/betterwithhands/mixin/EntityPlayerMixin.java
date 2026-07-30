@@ -4,6 +4,7 @@ import com.sajmonoriginal.betterwithhands.util.DualWieldHelper;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import com.sajmonoriginal.betterwithhands.util.OffhandLogicHelper;
 import com.sajmonoriginal.betterwithhands.util.OffhandSwingCapable;
+import net.minecraft.core.block.Block;
 import net.minecraft.core.entity.Entity;
 import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
@@ -60,7 +61,7 @@ public abstract class EntityPlayerMixin implements OffhandSwingCapable {
     @Inject(method = "tick", at = @At("TAIL"))
     private void updateOffhandSwing(CallbackInfo ci) {
         this.betterWithHands$offhandPrevSwingProgress = this.betterWithHands$offhandSwingProgress;
-        
+
         if (this.betterWithHands$offhandSwinging) {
             this.betterWithHands$offhandSwingProgressInt++;
             if (this.betterWithHands$offhandSwingProgressInt >= 8) {
@@ -70,12 +71,12 @@ public abstract class EntityPlayerMixin implements OffhandSwingCapable {
         } else {
             this.betterWithHands$offhandSwingProgressInt = 0;
         }
-        
+
         this.betterWithHands$offhandSwingProgress = (float) this.betterWithHands$offhandSwingProgressInt / 8.0F;
     }
 
     @Shadow
-    public abstract void dropPlayerItemWithRandomChoice(ItemStack itemStack, boolean randomChoice);
+    public abstract void dropItem(ItemStack itemStack, boolean randomChoice);
 
     @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
     private void onAttackStart(Entity target, CallbackInfo ci) {
@@ -97,19 +98,19 @@ public abstract class EntityPlayerMixin implements OffhandSwingCapable {
         OffhandCapable offhandInventory = (OffhandCapable) this.inventory;
         ItemStack mainHand = this.inventory.getCurrentItem();
         ItemStack offhand = offhandInventory.betterWithHands$getOffhandItem();
-        
+
         if (OffhandLogicHelper.shouldUseOffhand(mainHand, offhand, offhandInventory)) {
             if (offhand != null) {
                 int dropAmount = dropFullStack ? offhand.stackSize : 1;
                 ItemStack toDrop = offhand.copy();
                 toDrop.stackSize = dropAmount;
-                
+
                 offhand.stackSize -= dropAmount;
                 if (offhand.stackSize <= 0) {
                     offhandInventory.betterWithHands$setOffhandItem(null);
                 }
-                
-                this.dropPlayerItemWithRandomChoice(toDrop, false);
+
+                this.dropItem(toDrop, false);
             }
             ci.cancel();
         }
@@ -121,5 +122,40 @@ public abstract class EntityPlayerMixin implements OffhandSwingCapable {
         if (offhandInventory.betterWithHands$isUsingOffhand()) {
             cir.setReturnValue(offhandInventory.betterWithHands$getOffhandItem());
         }
+    }
+
+    @Inject(method = "getCurrentPlayerStrVsBlock", at = @At("HEAD"), cancellable = true)
+    private void onGetCurrentPlayerStrVsBlock(Block<?> block, CallbackInfoReturnable<Float> cir) {
+        OffhandCapable offhandInventory = (OffhandCapable) this.inventory;
+        ItemStack offhand = offhandInventory.betterWithHands$getOffhandItem();
+        if (offhand == null) {
+            return;
+        }
+        ItemStack mainHand = this.inventory.getCurrentItem();
+        if (!OffhandLogicHelper.shouldUseOffhandForBlock(mainHand, offhand, offhandInventory, block)) {
+            return;
+        }
+        cir.setReturnValue(offhand.getStrVsBlock(block));
+    }
+
+    @Inject(method = "canHarvestBlock", at = @At("HEAD"), cancellable = true)
+    private void onCanHarvestBlock(Block<?> block, CallbackInfoReturnable<Boolean> cir) {
+        if (block == null) {
+            return;
+        }
+        OffhandCapable offhandInventory = (OffhandCapable) this.inventory;
+        ItemStack offhand = offhandInventory.betterWithHands$getOffhandItem();
+        if (offhand == null) {
+            return;
+        }
+        ItemStack mainHand = this.inventory.getCurrentItem();
+        if (!OffhandLogicHelper.shouldUseOffhandForBlock(mainHand, offhand, offhandInventory, block)) {
+            return;
+        }
+        if (block.getMaterial().isAlwaysDestroyable()) {
+            cir.setReturnValue(true);
+            return;
+        }
+        cir.setReturnValue(offhand.canHarvestBlock((Player) (Object) this, block));
     }
 }

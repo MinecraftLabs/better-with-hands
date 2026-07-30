@@ -14,7 +14,9 @@ import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
 import net.minecraft.core.net.packet.PacketCustomPayload;
 import net.minecraft.core.util.helper.Side;
+import net.minecraft.core.util.phys.HitResult;
 import net.minecraft.core.world.World;
+import net.minecraft.core.world.pos.TilePosc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,22 +43,22 @@ public abstract class PlayerControllerMixin {
     private boolean betterWithHands$lastActionUsedOffhand = false;
 
     @Inject(method = "startDestroyBlock", at = @At("HEAD"))
-    private void onStartDestroyBlock(int x, int y, int z, Side side, double xHit, double yHit, boolean repeat, CallbackInfo ci) {
+    private void onStartDestroyBlock(TilePosc pos, Side side, double xHit, double yHit, boolean repeat, CallbackInfo ci) {
         this.betterWithHands$lastActionUsedOffhand = shouldUseOffhandForMining();
     }
 
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"))
-    private void onContinueDestroyBlock(int x, int y, int z, Side side, double xHit, double yHit, CallbackInfo ci) {
+    private void onContinueDestroyBlock(TilePosc pos, Side side, double xHit, double yHit, CallbackInfo ci) {
         this.betterWithHands$lastActionUsedOffhand = shouldUseOffhandForMining();
     }
 
     @Inject(method = "useOrPlaceItemStackOnTile", at = @At("HEAD"), cancellable = true)
-    private void onUseOrPlace(Player player, World world, ItemStack itemstack, int blockX, int blockY, int blockZ, Side side, double xPlaced, double yPlaced, CallbackInfoReturnable<Boolean> cir) {
+    private void onUseOrPlace(Player player, World world, ItemStack itemstack, TilePosc pos, Side side, double xPlaced, double yPlaced, CallbackInfoReturnable<Boolean> cir) {
         ItemStack offhand = ((OffhandCapable) player.inventory).betterWithHands$getOffhandItem();
         if (offhand != null && shouldUseOffhandForUse(itemstack)) {
             this.betterWithHands$lastActionUsedOffhand = true;
-            
-            boolean result = betterWithHands$useOrPlaceOffhand(player, world, offhand, blockX, blockY, blockZ, side, xPlaced, yPlaced);
+
+            boolean result = betterWithHands$useOrPlaceOffhand(player, world, offhand, pos, side, xPlaced, yPlaced);
             cir.setReturnValue(result);
         } else {
             this.betterWithHands$lastActionUsedOffhand = false;
@@ -64,45 +66,48 @@ public abstract class PlayerControllerMixin {
     }
 
     @Unique
-    private boolean betterWithHands$useOrPlaceOffhand(Player player, World world, ItemStack offhandStack, int blockX, int blockY, int blockZ, Side side, double xPlaced, double yPlaced) {
+    private boolean betterWithHands$useOrPlaceOffhand(Player player, World world, ItemStack offhandStack, TilePosc pos, Side side, double xPlaced, double yPlaced) {
         if (!player.getGamemode().canInteract()) {
             return false;
         }
-        
+
         OffhandCapable inventory = (OffhandCapable) player.inventory;
+        int blockX = pos.x();
+        int blockY = pos.y();
+        int blockZ = pos.z();
         int blockId = world.getBlockId(blockX, blockY, blockZ);
-        
+
         if (player.getHeldObject() != null) {
             return false;
         }
-        
-        if ((!player.isSneaking() || offhandStack == null) && blockId > 0 && 
-            net.minecraft.core.block.Blocks.blocksList[blockId].onBlockRightClicked(world, blockX, blockY, blockZ, player, side, xPlaced, yPlaced)) {
+
+        if ((!player.isSneaking() || offhandStack == null) && blockId > 0 &&
+            net.minecraft.core.block.Blocks.blocksList[blockId].onInteracted(world, pos, player, side, xPlaced, yPlaced)) {
             return true;
         }
         if (offhandStack == null) {
             return false;
         }
-        
+
         if (this.mc.isMultiplayerWorld()) {
             ((OffhandSwingCapable) player).betterWithHands$swingOffhand();
             betterWithHands$sendOffhandSwingPacket();
             betterWithHands$sendUseOffhandPacket(blockX, blockY, blockZ, side, xPlaced, yPlaced);
             return true;
         }
-        
+
         inventory.betterWithHands$setUsingOffhand(true);
         try {
             boolean used = offhandStack.useItem(player, world, blockX, blockY, blockZ, side, xPlaced, yPlaced);
-            
+
             if (used) {
                 ((OffhandSwingCapable) player).betterWithHands$swingOffhand();
             }
-            
+
             if (offhandStack.stackSize <= 0) {
                 inventory.betterWithHands$setOffhandItem(null);
             }
-            
+
             return used;
         } finally {
             inventory.betterWithHands$setUsingOffhand(false);
@@ -111,7 +116,7 @@ public abstract class PlayerControllerMixin {
 
     @Unique
     private boolean shouldUseOffhandForUse(ItemStack mainHandItem) {
-        if (this.mc.thePlayer == null || this.mc.gameSettings == null) {
+        if (this.mc.thePlayer == null) {
             return false;
         }
 
@@ -120,16 +125,15 @@ public abstract class PlayerControllerMixin {
             return false;
         }
 
-        BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
-        boolean dynamicPriority = options.betterWithHands$getDynamicHandPriority().value;
-        
+        boolean dynamicPriority = BetterWithHandsOptions.DYNAMIC_HAND_PRIORITY.value;
+
         if (dynamicPriority) {
             return DynamicPriorityHelper.shouldUseOffhandForAction(
                 mainHandItem, offhand, DynamicPriorityHelper.ActionType.USE, null);
         }
 
-        boolean swapPriority = options.betterWithHands$getSwapHandPriority().value;
-        boolean useWhenEmpty = options.betterWithHands$getUseOffhandWhenMainEmpty().value;
+        boolean swapPriority = BetterWithHandsOptions.SWAP_HAND_PRIORITY.value;
+        boolean useWhenEmpty = BetterWithHandsOptions.USE_OFFHAND_WHEN_MAIN_EMPTY.value;
 
         if (swapPriority) {
             return true;
@@ -147,7 +151,7 @@ public abstract class PlayerControllerMixin {
 
         ItemStack mainHand = this.mc.thePlayer.inventory.getCurrentItem();
         ItemStack offHand = ((OffhandCapable) this.mc.thePlayer.inventory).betterWithHands$getOffhandItem();
-        
+
         if (DynamicPriorityHelper.isDualWieldingSwords(mainHand, offHand)) {
             boolean rightMouseDown = org.lwjgl.input.Mouse.isButtonDown(1);
             if (rightMouseDown) {
@@ -168,13 +172,13 @@ public abstract class PlayerControllerMixin {
 
         boolean useOffhand;
         boolean rightMouseDown = org.lwjgl.input.Mouse.isButtonDown(1);
-        
+
         if (rightMouseDown) {
             useOffhand = shouldUseOffhandForUse(mainHand);
         } else {
             useOffhand = shouldUseOffhandForMining();
         }
-        
+
         if (useOffhand) {
             if (this.swingCooldown == 0 || force) {
                 ((OffhandSwingCapable) this.mc.thePlayer).betterWithHands$swingOffhand();
@@ -191,7 +195,7 @@ public abstract class PlayerControllerMixin {
 
     @Unique
     private boolean shouldUseOffhandForMining() {
-        if (this.mc.thePlayer == null || this.mc.gameSettings == null) {
+        if (this.mc.thePlayer == null) {
             return false;
         }
 
@@ -201,10 +205,9 @@ public abstract class PlayerControllerMixin {
         }
 
         ItemStack mainHand = this.mc.thePlayer.inventory.getCurrentItem();
-        
-        BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
-        boolean dynamicPriority = options.betterWithHands$getDynamicHandPriority().value;
-        
+
+        boolean dynamicPriority = BetterWithHandsOptions.DYNAMIC_HAND_PRIORITY.value;
+
         if (dynamicPriority) {
             Block<?> targetBlock = getTargetBlock();
             if (targetBlock != null) {
@@ -213,8 +216,8 @@ public abstract class PlayerControllerMixin {
             }
         }
 
-        boolean swapPriority = options.betterWithHands$getSwapHandPriority().value;
-        boolean useWhenEmpty = options.betterWithHands$getUseOffhandWhenMainEmpty().value;
+        boolean swapPriority = BetterWithHandsOptions.SWAP_HAND_PRIORITY.value;
+        boolean useWhenEmpty = BetterWithHandsOptions.USE_OFFHAND_WHEN_MAIN_EMPTY.value;
 
         if (swapPriority) {
             return true;
@@ -226,8 +229,8 @@ public abstract class PlayerControllerMixin {
 
     @Unique
     private Block<?> getTargetBlock() {
-        if (this.mc.objectMouseOver != null && this.mc.thePlayer != null && this.mc.thePlayer.world != null) {
-            int blockId = this.mc.thePlayer.world.getBlockId(this.mc.objectMouseOver.x, this.mc.objectMouseOver.y, this.mc.objectMouseOver.z);
+        if (this.mc.objectMouseOver instanceof HitResult.Tile tileHit && this.mc.thePlayer != null && this.mc.thePlayer.world != null) {
+            int blockId = this.mc.thePlayer.world.getBlockId(tileHit.tilePos.x(), tileHit.tilePos.y(), tileHit.tilePos.z());
             if (blockId > 0) {
                 return net.minecraft.core.block.Blocks.blocksList[blockId];
             }
@@ -237,7 +240,7 @@ public abstract class PlayerControllerMixin {
 
     @Unique
     private boolean shouldUseOffhandForAttack() {
-        if (this.mc.thePlayer == null || this.mc.gameSettings == null) {
+        if (this.mc.thePlayer == null) {
             return false;
         }
 
@@ -247,21 +250,20 @@ public abstract class PlayerControllerMixin {
         }
 
         ItemStack mainHand = this.mc.thePlayer.inventory.getCurrentItem();
-        
+
         if (DynamicPriorityHelper.isDualWieldingSwords(mainHand, offhand)) {
             return true;
         }
-        
-        BetterWithHandsOptions options = (BetterWithHandsOptions) this.mc.gameSettings;
-        boolean dynamicPriority = options.betterWithHands$getDynamicHandPriority().value;
-        
+
+        boolean dynamicPriority = BetterWithHandsOptions.DYNAMIC_HAND_PRIORITY.value;
+
         if (dynamicPriority) {
             return DynamicPriorityHelper.shouldUseOffhandForAction(
                 mainHand, offhand, DynamicPriorityHelper.ActionType.ATTACK, null);
         }
 
-        boolean swapPriority = options.betterWithHands$getSwapHandPriority().value;
-        boolean useWhenEmpty = options.betterWithHands$getUseOffhandWhenMainEmpty().value;
+        boolean swapPriority = BetterWithHandsOptions.SWAP_HAND_PRIORITY.value;
+        boolean useWhenEmpty = BetterWithHandsOptions.USE_OFFHAND_WHEN_MAIN_EMPTY.value;
 
         if (swapPriority) {
             return true;
@@ -277,7 +279,7 @@ public abstract class PlayerControllerMixin {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(baos);
             dos.writeByte(3);
-            
+
             PacketCustomPayload packet = new PacketCustomPayload(BetterWithHandsMod.MOD_ID, baos.toByteArray());
             this.mc.getSendQueue().addToSendQueue(packet);
         } catch (Exception e) {
@@ -294,10 +296,10 @@ public abstract class PlayerControllerMixin {
             dos.writeInt(blockX);
             dos.writeInt(blockY);
             dos.writeInt(blockZ);
-            dos.writeInt(side.getId());
+            dos.writeInt(side.id);
             dos.writeDouble(xPlaced);
             dos.writeDouble(yPlaced);
-            
+
             PacketCustomPayload packet = new PacketCustomPayload(BetterWithHandsMod.MOD_ID, baos.toByteArray());
             this.mc.getSendQueue().addToSendQueue(packet);
         } catch (Exception e) {
