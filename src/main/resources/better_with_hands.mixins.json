@@ -19,7 +19,8 @@
 		"client.MobRendererPlayerMixin",
 		"client.ModelBipedMixin",
 		"client.PacketHandlerClientMixin",
-		"client.PlayerControllerMixin"
+		"client.PlayerControllerMixin",
+		"client.hud.HudComponentEntrypointMixin"
 	],
 	"server": [
 		"EntityTrackerEntryMixin",
