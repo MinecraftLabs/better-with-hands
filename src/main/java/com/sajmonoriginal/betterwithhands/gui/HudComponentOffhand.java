@@ -27,7 +27,7 @@ public class HudComponentOffhand extends HudComponentMovable {
     private static final int SLOT_SIZE = 22;
     private static final int SELECTOR_SIZE = 24;
     private static final int SELECTOR_V = 22;
-    private static final int HOTBAR_SELECTOR_OFFSET = 5;
+    private static final int HOTBAR_GAP = 4;
     private static final long EQUIP_ANIMATION_MS = 300L;
 
     private ItemElement itemElement;
@@ -36,8 +36,6 @@ public class HudComponentOffhand extends HudComponentMovable {
     private long animationStartTime = 0L;
     private boolean animatingIn = false;
 
-    private boolean lastLeftHandMode = false;
-    private boolean layoutInitialized = false;
 
     public HudComponentOffhand(String key, Layout layout) {
         super(key, SLOT_SIZE, SLOT_SIZE, layout);
@@ -48,16 +46,26 @@ public class HudComponentOffhand extends HudComponentMovable {
         return GameSettings.IMMERSIVE_MODE.drawHotbar() && mc.thePlayer != null;
     }
 
-    private void updateLayoutForHandMode() {
-        boolean leftHandMode = BetterWithHandsOptions.LEFT_HAND_MODE.value;
-        if (!layoutInitialized || leftHandMode != lastLeftHandMode) {
-            lastLeftHandMode = leftHandMode;
-            layoutInitialized = true;
-            if (leftHandMode) {
-                setLayout(new LayoutSnap(HudComponents.HOTBAR, ComponentAnchor.CENTER_RIGHT, ComponentAnchor.CENTER_LEFT, 4, 0));
-            } else {
-                setLayout(new LayoutSnap(HudComponents.HOTBAR, ComponentAnchor.CENTER_LEFT, ComponentAnchor.CENTER_RIGHT, -4, 0));
-            }
+    public static LayoutSnap defaultLayout(boolean leftHanded) {
+        return leftHanded
+            ? new LayoutSnap(HudComponents.HOTBAR, ComponentAnchor.CENTER_RIGHT, ComponentAnchor.CENTER_LEFT, HOTBAR_GAP, 0)
+            : new LayoutSnap(HudComponents.HOTBAR, ComponentAnchor.CENTER_LEFT, ComponentAnchor.CENTER_RIGHT, -HOTBAR_GAP, 0);
+    }
+
+    private static boolean isDefaultLayout(Layout layout, boolean leftHanded) {
+        LayoutSnap expected = defaultLayout(leftHanded);
+        return layout instanceof LayoutSnap snap
+            && snap.getParent() == expected.getParent()
+            && snap.getParentAnchor() == expected.getParentAnchor()
+            && snap.getAnchor() == expected.getAnchor()
+            && snap.getXOffset() == expected.getXOffset()
+            && snap.getYOffset() == expected.getYOffset();
+    }
+
+    private void followHandedness() {
+        boolean leftHanded = GameSettings.PLAYER_LEFT_HANDED.value;
+        if (isDefaultLayout(getLayout(), !leftHanded)) {
+            setLayout(defaultLayout(leftHanded));
         }
     }
 
@@ -67,7 +75,7 @@ public class HudComponentOffhand extends HudComponentMovable {
             return;
         }
 
-        updateLayoutForHandMode();
+        followHandedness();
 
         ItemStack offhand = ((OffhandCapable) mc.thePlayer.inventory).betterWithHands$getOffhandItem();
 
@@ -113,11 +121,9 @@ public class HudComponentOffhand extends HudComponentMovable {
 
     @Override
     public void renderPreview(Gui gui, Layout layout, int xSizeScreen, int ySizeScreen) {
-        updateLayoutForHandMode();
+        followHandedness();
 
         int x = layout.getComponentX(this, xSizeScreen);
-        if (!lastLeftHandMode) {
-        }
         int y = layout.getComponentY(this, ySizeScreen);
 
         GLRenderer.pushFrame();

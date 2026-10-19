@@ -35,7 +35,6 @@ public class BetterWithHandsSettings {
                 .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.DYNAMIC_HAND_PRIORITY))
         ).withComponent(
             new OptionsCategory("gui.options.page.better_with_hands.category.display")
-                .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.LEFT_HAND_MODE))
                 .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.INDICATOR_TYPE))
                 .withComponent(new ToggleableOptionComponent<>(BetterWithHandsOptions.SHOW_INDICATOR_ONLY_WITH_OFFHAND))
         ).withComponent(

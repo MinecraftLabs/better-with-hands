@@ -11,6 +11,5 @@ options.betterWithHands.indicatorType.dot=Dot
 options.betterWithHands.indicatorType.arrow=Arrow
 options.betterWithHands.indicatorType.none=None
 options.betterWithHands.showIndicatorOnlyWithOffhand=Show Indicator Only With Offhand
-options.betterWithHands.leftHandMode=Left Hand Mode
 key.betterWithHands.swapHands=Swap Hands
 key.betterWithHands.swapPriority=Toggle Hand Priority
