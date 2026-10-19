@@ -40,7 +40,7 @@ public class PlayerOffhandMessage implements NetworkMessage {
     @Override
     @Environment(EnvType.CLIENT)
     public void handleClientEnv(NetworkContext context) {
-        Player player = ClientHands.findRemotePlayer(this.playerId);
+        Player player = ClientHands.findPlayer(this.playerId);
         if (player != null) {
             ((OffhandCapable) player.inventory).betterWithHands$setOffhandItem(this.offhand);
         }

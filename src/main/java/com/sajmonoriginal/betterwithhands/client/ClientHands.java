@@ -81,6 +81,15 @@ public final class ClientHands {
     }
 
     @Nullable
+    public static Player findPlayer(int entityId) {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.thePlayer != null && mc.thePlayer.id == entityId) {
+            return mc.thePlayer;
+        }
+        return findRemotePlayer(entityId);
+    }
+
+    @Nullable
     public static Player findRemotePlayer(int entityId) {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.currentWorld instanceof WorldClientMP world && world.getEntityFromId(entityId) instanceof Player player && player != mc.thePlayer) {

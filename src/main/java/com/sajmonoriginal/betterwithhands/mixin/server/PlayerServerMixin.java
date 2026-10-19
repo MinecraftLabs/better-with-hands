@@ -29,9 +29,14 @@ public abstract class PlayerServerMixin {
     private void broadcastOffhandChange(CallbackInfo ci) {
         PlayerServer self = (PlayerServer) (Object) this;
         ItemStack offhand = ((OffhandCapable) self.inventory).betterWithHands$getOffhandItem();
-        if (offhand != this.betterWithHands$trackedOffhand) {
-            this.betterWithHands$trackedOffhand = offhand;
-            this.betterWithHands$sendToTrackers(new PlayerOffhandMessage(self.id, offhand));
+        if (ItemStack.areItemStacksEqual(offhand, this.betterWithHands$trackedOffhand)) {
+            return;
+        }
+        this.betterWithHands$trackedOffhand = ItemStack.copyItemStack(offhand);
+        PlayerOffhandMessage message = new PlayerOffhandMessage(self.id, offhand);
+        this.betterWithHands$sendToTrackers(message);
+        if (self.containerMenu != self.inventoryMenu) {
+            NetworkHandler.sendToPlayer(self, message);
         }
     }
 
