@@ -62,12 +62,13 @@ Example: Pickaxe in main hand, sword in offhand. Mine normally, but when a creep
 
 ### Display
 
-**Left Hand Mode** (default: OFF)  
-For left-handed players. Swaps the hand positions — your main hand appears on the left side of the screen, offhand on the right. The HUD slot also moves to match.
+**Left-Handed**  
+Follows the game's own left-handed setting. Your main hand moves to the left, the offhand to the right, and the HUD slot moves to the other side of the hotbar.
 
 **Indicator Type**  
 A visual marker showing which hand is currently active:
 - *Border* — Highlight around the active slot
+- *Vanilla* — Highlight in the style of the hotbar selection
 - *Dot* — Small dot above the active slot  
 - *Arrow* — Arrow pointing to the active slot
 - *None* — No indicator
@@ -113,20 +114,20 @@ Left click attacks with offhand, right click attacks with main hand. Channel you
 
 ## Additional Details
 
-- **Item Pickup:** When your inventory is full, stackable items can go directly into your offhand if there's a matching stack
+- **Item Pickup:** Picked up items go into your offhand first when they stack with it
 - **Q to Drop:** When offhand has priority, pressing Q drops from your offhand
 - **Tool Stats:** Mining speed and harvest level are checked correctly for offhand tools
 
 ## Installation
 
-1. Install BTA and Babric (the mod loader)
+1. Install BTA 8.0.1 with Fabric and HalpLibe
 2. Place the mod `.jar` file in your `mods` folder
 3. Launch the game
 
 ## Multiplayer Notes
 
 The mod works in multiplayer with some considerations:
-- Both client and server should have the mod installed
+- Both client and server need the mod. On a server without it the offhand stays inactive
 - Your settings sync to the server when you join
 - Other players see your offhand items and animations
 
