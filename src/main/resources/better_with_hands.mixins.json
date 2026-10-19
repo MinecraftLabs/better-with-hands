@@ -6,14 +6,13 @@
 		"defaultRequire": 1
 	},
 	"mixins": [
-		"InventoryPlayerMixin",
-		"EntityPlayerMixin",
+		"ContainerInventoryMixin",
 		"MenuAbstractMixin",
 		"MenuInventoryMixin",
+		"PlayerMixin",
 		"accessor.MenuAbstractAccessor"
 	],
 	"client": [
-		"client.GuiIngameMixin",
 		"client.GuiInventoryCreativeMixin",
 		"client.GuiInventoryMixin",
 		"client.ItemRendererMixin",
@@ -22,12 +21,15 @@
 		"client.ModelBipedMixin",
 		"client.PacketHandlerClientMixin",
 		"client.PlayerControllerMixin",
+		"client.PlayerLocalMixin",
+		"client.PlayerLocalMultiplayerMixin",
 		"client.hud.HudComponentEntrypointMixin"
 	],
 	"server": [
-		"EntityTrackerEntryMixin",
-		"NetServerHandlerMixin",
-		"PacketHandlerServerMixin",
-		"PlayerServerMixin"
+		"server.EntityTrackerEntryImplMixin",
+		"server.PacketHandlerServerMixin",
+		"server.PlayerListMixin",
+		"server.PlayerServerMixin",
+		"server.ServerPlayerControllerMixin"
 	]
 }

@@ -3,7 +3,9 @@ package com.sajmonoriginal.betterwithhands.slot;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import net.minecraft.core.item.ItemStack;
 import net.minecraft.core.player.inventory.container.ContainerInventory;
+import net.minecraft.core.player.inventory.menu.MenuAbstract;
 import net.minecraft.core.player.inventory.slot.Slot;
+import org.jetbrains.annotations.Nullable;
 
 public class SlotOffhand extends Slot {
     private final ContainerInventory inventory;
@@ -11,6 +13,16 @@ public class SlotOffhand extends Slot {
     public SlotOffhand(ContainerInventory inventory, int x, int y) {
         super(inventory, 0, x, y);
         this.inventory = inventory;
+    }
+
+    @Nullable
+    public static SlotOffhand find(MenuAbstract menu) {
+        for (Slot slot : menu.slots) {
+            if (slot instanceof SlotOffhand offhandSlot) {
+                return offhandSlot;
+            }
+        }
+        return null;
     }
 
     @Override

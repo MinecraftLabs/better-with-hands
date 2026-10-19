@@ -1,5 +1,6 @@
 package com.sajmonoriginal.betterwithhands.option;
 
+import com.sajmonoriginal.betterwithhands.util.HandPriority;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.input.InputDevice;
@@ -20,5 +21,10 @@ public final class BetterWithHandsOptions {
     public static final KeyBinding KEY_SWAP_PRIORITY = GameSettings.register(new KeyBinding("key.betterWithHands.swapPriority").setDefault(InputDevice.keyboard, Keyboard.KEY_X));
     public static final KeyBinding KEY_SWAP_HANDS = GameSettings.register(new KeyBinding("key.betterWithHands.swapHands").setDefault(InputDevice.keyboard, Keyboard.KEY_F));
 
-    private BetterWithHandsOptions() {}
+    private BetterWithHandsOptions() {
+    }
+
+    public static HandPriority handPriority() {
+        return new HandPriority(SWAP_HAND_PRIORITY.value, USE_OFFHAND_WHEN_MAIN_EMPTY.value, DYNAMIC_HAND_PRIORITY.value);
+    }
 }

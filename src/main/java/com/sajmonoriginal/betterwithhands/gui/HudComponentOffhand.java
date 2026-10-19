@@ -2,7 +2,7 @@ package com.sajmonoriginal.betterwithhands.gui;
 
 import com.sajmonoriginal.betterwithhands.option.BetterWithHandsOptions;
 import com.sajmonoriginal.betterwithhands.option.IndicatorType;
-import com.sajmonoriginal.betterwithhands.util.DynamicPriorityHelper;
+import com.sajmonoriginal.betterwithhands.util.HandLogic;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -146,7 +146,7 @@ public class HudComponentOffhand extends HudComponentMovable {
         ItemStack offhand = ((OffhandCapable) mc.thePlayer.inventory).betterWithHands$getOffhandItem();
         ItemStack mainhand = mc.thePlayer.inventory.getCurrentItem();
 
-        boolean dualWieldSwords = DynamicPriorityHelper.isDualWieldingSwords(mainhand, offhand);
+        boolean dualWieldSwords = HandLogic.isDualWieldingSwords(mainhand, offhand);
 
         boolean offhandActive = false;
         if (offhand != null) {
