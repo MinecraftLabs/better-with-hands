@@ -22,6 +22,7 @@
 		"client.PlayerLocalMixin",
 		"client.PlayerLocalMultiplayerMixin",
 		"client.ScreenInventoryMixin",
+		"client.accessor.PlayerControllerAccessor",
 		"client.hud.HudComponentEntrypointMixin"
 	],
 	"server": [

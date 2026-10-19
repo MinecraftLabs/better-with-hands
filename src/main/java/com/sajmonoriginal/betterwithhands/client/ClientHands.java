@@ -1,5 +1,6 @@
 package com.sajmonoriginal.betterwithhands.client;
 
+import com.sajmonoriginal.betterwithhands.mixin.client.accessor.PlayerControllerAccessor;
 import com.sajmonoriginal.betterwithhands.network.HandPriorityMessage;
 import com.sajmonoriginal.betterwithhands.network.OffhandAttackMessage;
 import com.sajmonoriginal.betterwithhands.network.SwapHandsMessage;
@@ -54,8 +55,10 @@ public final class ClientHands {
         if (!isEnabled()) {
             return;
         }
+        Minecraft mc = Minecraft.getMinecraft();
         ((OffhandCapable) player.inventory).betterWithHands$swapHands();
-        if (Minecraft.getMinecraft().isMultiplayerWorld()) {
+        if (mc.isMultiplayerWorld()) {
+            ((PlayerControllerAccessor) mc.playerController).betterWithHands$syncCurrentPlayItem();
             NetworkHandler.sendToServer(new SwapHandsMessage());
         }
     }
@@ -71,6 +74,7 @@ public final class ClientHands {
     public static void attackWithOffhand(Minecraft mc, Player player, Entity target) {
         OffhandScope.run(player, () -> mc.playerController.swingItem(true));
         if (mc.isMultiplayerWorld()) {
+            ((PlayerControllerAccessor) mc.playerController).betterWithHands$syncCurrentPlayItem();
             NetworkHandler.sendToServer(new OffhandAttackMessage(target.id));
         }
         OffhandScope.run(player, () -> player.attackTargetEntityWithCurrentItem(target));
