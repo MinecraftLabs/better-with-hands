@@ -13,7 +13,7 @@ public class SlotOffhand extends Slot {
     private final ContainerInventory inventory;
 
     public SlotOffhand(ContainerInventory inventory, int x, int y) {
-        super(inventory, 0, x, y);
+        super(inventory, -1, x, y);
         this.inventory = inventory;
     }
 
@@ -27,14 +27,33 @@ public class SlotOffhand extends Slot {
         return null;
     }
 
+    public boolean isEnabled() {
+        return ((OffhandCapable) this.inventory).betterWithHands$isOffhandEnabled();
+    }
+
     @Override
     public String getItemIcon() {
-        return OUTLINE_ICON;
+        return this.isEnabled() ? OUTLINE_ICON : null;
     }
 
     @Override
     public boolean isLocked() {
         return false;
+    }
+
+    @Override
+    public boolean mayPlace(ItemStack itemStack) {
+        return this.isEnabled();
+    }
+
+    @Override
+    public boolean enableDragAndPickup() {
+        return this.isEnabled();
+    }
+
+    @Override
+    public boolean allowItemInteraction() {
+        return this.isEnabled();
     }
 
     @Override

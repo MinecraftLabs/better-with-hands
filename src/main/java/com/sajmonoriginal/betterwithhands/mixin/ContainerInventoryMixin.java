@@ -39,6 +39,9 @@ public abstract class ContainerInventoryMixin implements OffhandCapable {
     private int betterWithHands$actionSlot = -1;
 
     @Unique
+    private boolean betterWithHands$offhandEnabled = true;
+
+    @Unique
     private HandPriority betterWithHands$handPriority = HandPriority.DEFAULT;
 
     @Override
@@ -53,7 +56,7 @@ public abstract class ContainerInventoryMixin implements OffhandCapable {
 
     @Override
     public void betterWithHands$swapHands() {
-        if (this.currentSlotLocked() || this.betterWithHands$actionSlot >= 0) {
+        if (!this.betterWithHands$offhandEnabled || this.currentSlotLocked() || this.betterWithHands$actionSlot >= 0) {
             return;
         }
         int slot = this.getCurrentSlot();
@@ -93,6 +96,16 @@ public abstract class ContainerInventoryMixin implements OffhandCapable {
     }
 
     @Override
+    public boolean betterWithHands$isOffhandEnabled() {
+        return this.betterWithHands$offhandEnabled;
+    }
+
+    @Override
+    public void betterWithHands$setOffhandEnabled(boolean enabled) {
+        this.betterWithHands$offhandEnabled = enabled;
+    }
+
+    @Override
     public HandPriority betterWithHands$getHandPriority() {
         return this.betterWithHands$handPriority;
     }
@@ -105,7 +118,7 @@ public abstract class ContainerInventoryMixin implements OffhandCapable {
     @Inject(method = "insertItem", at = @At("HEAD"))
     private void mergeIntoOffhand(ItemStack stackToAdd, boolean useHotbarOffset, CallbackInfo ci) {
         ItemStack offhand = this.betterWithHands$offhandItem;
-        if (offhand == null || this.betterWithHands$actionSlot >= 0 || stackToAdd.stackSize <= 0
+        if (offhand == null || !this.betterWithHands$offhandEnabled || this.betterWithHands$actionSlot >= 0 || stackToAdd.stackSize <= 0
             || !this.player.getGamemode().canInteract() || !offhand.canStackWith(stackToAdd)) {
             return;
         }

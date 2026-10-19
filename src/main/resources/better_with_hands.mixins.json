@@ -21,6 +21,7 @@
 		"client.PlayerControllerMixin",
 		"client.PlayerLocalMixin",
 		"client.PlayerLocalMultiplayerMixin",
+		"client.ScreenContainerAbstractMixin",
 		"client.ScreenInventoryMixin",
 		"client.accessor.PlayerControllerAccessor",
 		"client.hud.HudComponentEntrypointMixin"

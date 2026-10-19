@@ -21,7 +21,8 @@ public final class HandLogic {
     public static boolean prefersOffhand(Player player, HandAction action, @Nullable Block<?> block) {
         OffhandCapable hands = (OffhandCapable) player.inventory;
         ItemStack offhand = hands.betterWithHands$getOffhandItem();
-        if (offhand == null || hands.betterWithHands$isOffhandActionActive() || player.getHeldObject() != null) {
+        if (offhand == null || !hands.betterWithHands$isOffhandEnabled() || hands.betterWithHands$isOffhandActionActive()
+            || player.getHeldObject() != null) {
             return false;
         }
 

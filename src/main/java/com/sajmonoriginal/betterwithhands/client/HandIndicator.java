@@ -33,7 +33,7 @@ public final class HandIndicator {
     }
 
     public static boolean highlightMainHand(Player player) {
-        if (type() == IndicatorType.NONE) {
+        if (type() == IndicatorType.NONE || !((OffhandCapable) player.inventory).betterWithHands$isOffhandEnabled()) {
             return false;
         }
         ItemStack offhand = ((OffhandCapable) player.inventory).betterWithHands$getOffhandItem();

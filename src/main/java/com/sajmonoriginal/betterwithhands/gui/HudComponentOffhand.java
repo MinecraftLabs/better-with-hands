@@ -66,13 +66,14 @@ public class HudComponentOffhand extends HudComponentMovable {
 
     @Override
     public boolean isVisible() {
-        return GameSettings.IMMERSIVE_MODE.drawHotbar() && mc.thePlayer != null;
+        return GameSettings.IMMERSIVE_MODE.drawHotbar() && mc.thePlayer != null
+            && ((OffhandCapable) mc.thePlayer.inventory).betterWithHands$isOffhandEnabled();
     }
 
     @Override
     public void render(HudIngame hud, int xSizeScreen, int ySizeScreen, float partialTick) {
         Player player = mc.thePlayer;
-        if (player == null) {
+        if (player == null || !((OffhandCapable) player.inventory).betterWithHands$isOffhandEnabled()) {
             return;
         }
         followHandedness();

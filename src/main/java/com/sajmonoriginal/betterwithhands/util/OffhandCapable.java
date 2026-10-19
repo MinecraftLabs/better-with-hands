@@ -15,6 +15,10 @@ public interface OffhandCapable {
 
     boolean betterWithHands$isOffhandActionActive();
 
+    boolean betterWithHands$isOffhandEnabled();
+
+    void betterWithHands$setOffhandEnabled(boolean enabled);
+
     HandPriority betterWithHands$getHandPriority();
 
     void betterWithHands$setHandPriority(HandPriority priority);

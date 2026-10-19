@@ -43,8 +43,10 @@ public final class ClientHands {
     }
 
     public static void syncHandPriority(Player player) {
-        HandPriority priority = isEnabled() ? BetterWithHandsOptions.handPriority() : HandPriority.DISABLED;
-        ((OffhandCapable) player.inventory).betterWithHands$setHandPriority(priority);
+        HandPriority priority = BetterWithHandsOptions.handPriority();
+        OffhandCapable hands = (OffhandCapable) player.inventory;
+        hands.betterWithHands$setOffhandEnabled(isEnabled());
+        hands.betterWithHands$setHandPriority(priority);
         if (Minecraft.getMinecraft().isMultiplayerWorld() && serverSupported && !priority.equals(sentPriority)) {
             sentPriority = priority;
             NetworkHandler.sendToServer(new HandPriorityMessage(priority));

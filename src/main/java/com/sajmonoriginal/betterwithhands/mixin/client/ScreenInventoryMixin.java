@@ -27,7 +27,7 @@ public abstract class ScreenInventoryMixin extends ScreenContainerAbstract {
     @Inject(method = "drawGuiContainerBackgroundLayer", at = @At("TAIL"))
     private void drawOffhandSlotFrame(float partialTick, CallbackInfo ci) {
         SlotOffhand slot = SlotOffhand.find(this.inventorySlots);
-        if (slot == null) {
+        if (slot == null || !slot.isEnabled()) {
             return;
         }
         int left = (this.width - this.xSize) / 2;
