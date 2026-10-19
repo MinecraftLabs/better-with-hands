@@ -13,8 +13,6 @@
 		"accessor.MenuAbstractAccessor"
 	],
 	"client": [
-		"client.GuiInventoryCreativeMixin",
-		"client.GuiInventoryMixin",
 		"client.HudComponentHotbarMixin",
 		"client.ItemRendererMixin",
 		"client.MinecraftMixin",
@@ -23,6 +21,7 @@
 		"client.PlayerControllerMixin",
 		"client.PlayerLocalMixin",
 		"client.PlayerLocalMultiplayerMixin",
+		"client.ScreenInventoryMixin",
 		"client.hud.HudComponentEntrypointMixin"
 	],
 	"server": [

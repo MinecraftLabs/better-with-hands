@@ -8,6 +8,8 @@ import net.minecraft.core.player.inventory.slot.Slot;
 import org.jetbrains.annotations.Nullable;
 
 public class SlotOffhand extends Slot {
+    private static final String OUTLINE_ICON = "better_with_hands:item/offhand_slot_outline";
+
     private final ContainerInventory inventory;
 
     public SlotOffhand(ContainerInventory inventory, int x, int y) {
@@ -23,6 +25,16 @@ public class SlotOffhand extends Slot {
             }
         }
         return null;
+    }
+
+    @Override
+    public String getItemIcon() {
+        return OUTLINE_ICON;
+    }
+
+    @Override
+    public boolean isLocked() {
+        return false;
     }
 
     @Override
