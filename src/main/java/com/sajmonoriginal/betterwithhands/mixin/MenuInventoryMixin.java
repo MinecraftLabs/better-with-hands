@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = MenuInventory.class, remap = false)
+@Mixin(value = MenuInventory.class, remap = false, priority = 1500)
 public abstract class MenuInventoryMixin {
     @Inject(method = "<init>(Lnet/minecraft/core/player/inventory/container/ContainerInventory;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/player/inventory/menu/MenuInventory;slotsChanged(Lnet/minecraft/core/player/inventory/container/Container;)V"))
     private void addOffhandSlot(ContainerInventory inventory, CallbackInfo ci) {
