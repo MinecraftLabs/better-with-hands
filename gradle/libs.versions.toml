@@ -12,7 +12,7 @@ bta = "8.0.1"
 btaChannel = "release"
 loader = "0.18.4-bta.11"
 modMenu = "5.0.2"
-halplibe = "6.1.4+8.0"
+halplibe = "6.2.0+8.0.1"
 legacyLwjgl = "1.0.6"
 ##########################################################################
 # Dependencies
