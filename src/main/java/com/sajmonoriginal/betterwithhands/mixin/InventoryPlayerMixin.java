@@ -101,9 +101,9 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
         this.dynamicPriority = dynamicPriority;
     }
 
-    @Inject(method = "insertItem", at = @At("TAIL"))
-    private void tryInsertIntoOffhand(ItemStack stackToAdd, boolean useHotbarOffset, CallbackInfo ci) {
-        if (stackToAdd == null || stackToAdd.stackSize <= 0) {
+    @Inject(method = "insertItem", at = @At("HEAD"))
+    private void mergeIntoOffhand(ItemStack stackToAdd, boolean useHotbarOffset, CallbackInfo ci) {
+        if (stackToAdd.stackSize <= 0 || !this.player.getGamemode().canInteract()) {
             return;
         }
 
@@ -126,6 +126,23 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
         }
     }
 
+    @Inject(method = "containsItem", at = @At("RETURN"), cancellable = true)
+    private void checkOffhandContains(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+        if (!cir.getReturnValueZ() && this.offhandItem != null && this.offhandItem.isStackEqual(stack)) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "transferAllContents", at = @At("TAIL"))
+    private void transferOffhand(ContainerInventory inventory, CallbackInfo ci) {
+        OffhandCapable previous = (OffhandCapable) inventory;
+        this.offhandItem = previous.betterWithHands$getOffhandItem();
+        previous.betterWithHands$setOffhandItem(null);
+        this.swapPriority = previous.betterWithHands$getSwapPriority();
+        this.useWhenEmpty = previous.betterWithHands$getUseWhenEmpty();
+        this.dynamicPriority = previous.betterWithHands$getDynamicPriority();
+    }
+
     @Inject(method = "dropAllItems", at = @At("TAIL"))
     private void dropOffhandOnDeath(CallbackInfo ci) {
         if (this.offhandItem != null) {
@@ -146,6 +163,7 @@ public abstract class InventoryPlayerMixin implements OffhandCapable {
 
     @Inject(method = "load", at = @At("TAIL"))
     private void loadOffhandFromNBT(ListTag listTag, CallbackInfo ci) {
+        this.offhandItem = null;
         for (int i = 0; i < listTag.tagCount(); i++) {
             CompoundTag tag = (CompoundTag) listTag.tagAt(i);
             int slot = tag.getByte("Slot") & 255;
