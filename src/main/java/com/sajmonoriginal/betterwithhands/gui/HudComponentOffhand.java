@@ -129,12 +129,15 @@ public class HudComponentOffhand extends HudComponentMovable {
 
     private static void drawIndicator(Gui gui, int x, int y) {
         TessellatorGeneral tessellator = GLRenderer.getTessellator();
+        GLRenderer.pushFrame();
         GLRenderer.enableState(State.BLEND);
         GLRenderer.setBlendFunc(BlendFactor.SRC_ALPHA, BlendFactor.ONE_MINUS_SRC_ALPHA);
+        GLRenderer.setColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         TextureRegistry.guiSpriteAtlas.bind();
         tessellator.startDrawingQuads();
         HandIndicator.addIndicator(gui, tessellator, x, y);
         tessellator.draw();
+        GLRenderer.popFrame();
     }
 
     private static void renderItem(ItemStack stack, int x, int y, float partialTick) {

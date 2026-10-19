@@ -2,15 +2,18 @@ package com.sajmonoriginal.betterwithhands.client;
 
 import com.sajmonoriginal.betterwithhands.option.BetterWithHandsOptions;
 import com.sajmonoriginal.betterwithhands.option.IndicatorType;
+import com.sajmonoriginal.betterwithhands.util.HandAction;
 import com.sajmonoriginal.betterwithhands.util.HandLogic;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.render.tessellator.TessellatorGeneral;
 import net.minecraft.client.render.texture.stitcher.TextureRegistry;
 import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
+import net.minecraft.core.util.phys.HitResult;
 
 @Environment(EnvType.CLIENT)
 public final class HandIndicator {
@@ -29,7 +32,7 @@ public final class HandIndicator {
         if (type() == IndicatorType.NONE || offhand == null) {
             return false;
         }
-        return HandLogic.isDualWieldingSwords(player.inventory.getCurrentItem(), offhand) || HandLogic.isOffhandPrimary(player);
+        return HandLogic.isDualWieldingSwords(player.inventory.getCurrentItem(), offhand) || offhandActs(player);
     }
 
     public static boolean highlightMainHand(Player player) {
@@ -40,7 +43,15 @@ public final class HandIndicator {
         if (offhand == null) {
             return !BetterWithHandsOptions.SHOW_INDICATOR_ONLY_WITH_OFFHAND.value;
         }
-        return HandLogic.isDualWieldingSwords(player.inventory.getCurrentItem(), offhand) || !HandLogic.isOffhandPrimary(player);
+        return HandLogic.isDualWieldingSwords(player.inventory.getCurrentItem(), offhand) || !offhandActs(player);
+    }
+
+    private static boolean offhandActs(Player player) {
+        HitResult target = Minecraft.getMinecraft().objectMouseOver;
+        if (target instanceof HitResult.Tile tile) {
+            return HandLogic.prefersOffhand(player, HandAction.MINE, player.world.getBlockType(tile.tilePos));
+        }
+        return HandLogic.prefersOffhand(player, target instanceof HitResult.Entity ? HandAction.ATTACK : HandAction.SWING, null);
     }
 
     public static void addIndicator(Gui gui, TessellatorGeneral tessellator, double x, double y) {

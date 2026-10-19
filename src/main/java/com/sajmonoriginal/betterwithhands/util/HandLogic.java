@@ -42,15 +42,6 @@ public final class HandLogic {
         return (clickType == 0) != player.isLeftHanded();
     }
 
-    public static boolean isOffhandPrimary(Player player) {
-        OffhandCapable hands = (OffhandCapable) player.inventory;
-        if (hands.betterWithHands$getOffhandItem() == null) {
-            return false;
-        }
-        HandPriority priority = hands.betterWithHands$getHandPriority();
-        return priority.swapPriority() || priority.useWhenEmpty() && player.inventory.getCurrentItem() == null;
-    }
-
     public static <T> T perform(Player player, HandAction action, @Nullable Block<?> block, Supplier<T> task) {
         return prefersOffhand(player, action, block) ? OffhandScope.call(player, task) : task.get();
     }
