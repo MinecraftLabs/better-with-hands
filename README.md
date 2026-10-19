@@ -47,3 +47,7 @@ Found in **Options > Better With Hands**.
 
 - BTA == 8.0.1
 - HalpLibe >= [6.2.0+8.0.1](https://github.com/Turnip-Labs/bta-halplibe/releases)
+
+### License
+
+See [LICENSE](LICENSE). Short version: free for personal use and free modpacks with attribution, no commercial use without permission.

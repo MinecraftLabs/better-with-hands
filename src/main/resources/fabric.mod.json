@@ -10,7 +10,7 @@
 	"contact": {
 		"sources": "https://github.com/MinecraftLabs/better-with-hands"
 	},
-	"license": "MIT",
+	"license": "See LICENSE",
 	"icon": "icon.png",
 	"environment": "*",
 	"entrypoints": {
