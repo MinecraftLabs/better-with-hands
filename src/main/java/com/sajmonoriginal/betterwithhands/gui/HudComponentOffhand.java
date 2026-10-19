@@ -1,49 +1,44 @@
 package com.sajmonoriginal.betterwithhands.gui;
 
-import com.sajmonoriginal.betterwithhands.option.BetterWithHandsOptions;
+import com.sajmonoriginal.betterwithhands.client.HandIndicator;
 import com.sajmonoriginal.betterwithhands.option.IndicatorType;
-import com.sajmonoriginal.betterwithhands.util.HandLogic;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.ItemElement;
 import net.minecraft.client.gui.hud.HudIngame;
 import net.minecraft.client.gui.hud.component.ComponentAnchor;
-import net.minecraft.client.gui.hud.component.HudComponent;
 import net.minecraft.client.gui.hud.component.HudComponentMovable;
 import net.minecraft.client.gui.hud.component.HudComponents;
 import net.minecraft.client.gui.hud.component.layout.Layout;
 import net.minecraft.client.gui.hud.component.layout.LayoutSnap;
 import net.minecraft.client.option.GameSettings;
+import net.minecraft.client.render.Lighting;
+import net.minecraft.client.render.item.model.ItemModel;
+import net.minecraft.client.render.item.model.ItemModelDispatcher;
 import net.minecraft.client.render.renderer.BlendFactor;
 import net.minecraft.client.render.renderer.GLRenderer;
 import net.minecraft.client.render.renderer.State;
+import net.minecraft.client.render.tessellator.TessellatorGeneral;
+import net.minecraft.client.render.texture.stitcher.TextureRegistry;
+import net.minecraft.core.entity.player.Player;
 import net.minecraft.core.item.ItemStack;
+import net.minecraft.core.util.helper.LightIndexHelper;
 
 @Environment(EnvType.CLIENT)
 public class HudComponentOffhand extends HudComponentMovable {
-    private static final String HUD_TEXTURE = "/assets/better_with_hands/textures/gui/hud_offhand.png";
+    private static final String SLOT_SPRITE = "better_with_hands:gui/hud/offhand_slot";
     private static final int SLOT_SIZE = 22;
-    private static final int SELECTOR_SIZE = 24;
-    private static final int SELECTOR_V = 22;
     private static final int HOTBAR_GAP = 4;
     private static final long EQUIP_ANIMATION_MS = 300L;
 
-    private ItemElement itemElement;
-
-    private ItemStack lastOffhand = null;
-    private long animationStartTime = 0L;
+    private ItemStack previousOffhand = null;
+    private ItemStack shownOffhand = null;
+    private long animationStart = 0L;
     private boolean animatingIn = false;
-
 
     public HudComponentOffhand(String key, Layout layout) {
         super(key, SLOT_SIZE, SLOT_SIZE, layout);
-    }
-
-    @Override
-    public boolean isVisible() {
-        return GameSettings.IMMERSIVE_MODE.drawHotbar() && mc.thePlayer != null;
     }
 
     public static LayoutSnap defaultLayout(boolean leftHanded) {
@@ -70,178 +65,102 @@ public class HudComponentOffhand extends HudComponentMovable {
     }
 
     @Override
-    public void render(HudIngame hud, int xSizeScreen, int ySizeScreen, float partialTicks) {
-        if (mc.thePlayer == null) {
+    public boolean isVisible() {
+        return GameSettings.IMMERSIVE_MODE.drawHotbar() && mc.thePlayer != null;
+    }
+
+    @Override
+    public void render(HudIngame hud, int xSizeScreen, int ySizeScreen, float partialTick) {
+        Player player = mc.thePlayer;
+        if (player == null) {
             return;
         }
-
         followHandedness();
 
-        ItemStack offhand = ((OffhandCapable) mc.thePlayer.inventory).betterWithHands$getOffhandItem();
-
-        boolean itemTypeChanged = !isSameItemType(offhand, this.lastOffhand);
-        if (itemTypeChanged) {
-            this.animationStartTime = System.currentTimeMillis();
+        ItemStack offhand = ((OffhandCapable) player.inventory).betterWithHands$getOffhandItem();
+        if (!isSameItem(offhand, this.previousOffhand)) {
+            this.animationStart = System.currentTimeMillis();
             this.animatingIn = offhand != null;
         }
-        this.lastOffhand = offhand != null ? offhand.copy() : null;
+        this.previousOffhand = offhand;
+        if (offhand != null) {
+            this.shownOffhand = offhand;
+        }
 
-        long elapsed = System.currentTimeMillis() - this.animationStartTime;
-        float animFraction = Math.min(1.0F, (float) elapsed / EQUIP_ANIMATION_MS);
-        float animProgress = this.animatingIn ? animFraction : 1.0F - animFraction;
+        float animation = Math.min(1.0F, (float) (System.currentTimeMillis() - this.animationStart) / EQUIP_ANIMATION_MS);
+        float progress = this.animatingIn ? animation : 1.0F - animation;
+        if (progress <= 0.01F && offhand == null) {
+            this.shownOffhand = null;
+        }
 
-        int slotX = getLayout().getComponentX(this, xSizeScreen);
-        int slotBaseY = getLayout().getComponentY(this, ySizeScreen);
-
-        float slideOffset = (1.0F - animProgress) * 24.0F;
-        int slotY = slotBaseY + (int) slideOffset;
-
-        if (animProgress > 0.01F) {
-            if (this.itemElement == null) {
-                this.itemElement = new ItemElement(mc);
-            }
-
+        int x = getLayout().getComponentX(this, xSizeScreen);
+        int y = getLayout().getComponentY(this, ySizeScreen);
+        if (progress > 0.01F) {
+            int slotY = y + (int) ((1.0F - progress) * SLOT_SIZE);
             GLRenderer.pushFrame();
-            GLRenderer.setColor4f(1.0F, 1.0F, 1.0F, animProgress);
             GLRenderer.enableState(State.BLEND);
             GLRenderer.setBlendFunc(BlendFactor.SRC_ALPHA, BlendFactor.ONE_MINUS_SRC_ALPHA);
-
-            mc.textureManager.loadTexture(HUD_TEXTURE).bind();
-            hud.drawTexturedModalRect(slotX, slotY, 0, 0, SLOT_SIZE, SLOT_SIZE);
-
-            if (offhand != null) {
-                this.itemElement.render(offhand, slotX + 3, slotY + 3);
+            GLRenderer.setColor4f(1.0F, 1.0F, 1.0F, progress);
+            hud.drawGuiIcon(x, slotY, SLOT_SIZE, SLOT_SIZE, TextureRegistry.getTexture(SLOT_SPRITE));
+            GLRenderer.setColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            if (this.shownOffhand != null) {
+                renderItem(this.shownOffhand, x + 3, slotY + 3, partialTick);
             }
-
             GLRenderer.popFrame();
         }
 
-        renderPriorityIndicator(hud, slotX, slotBaseY, animProgress, xSizeScreen, ySizeScreen);
+        if (HandIndicator.highlightOffhand(player)) {
+            drawIndicator(hud, x - 1, y - 1);
+        }
     }
 
     @Override
     public void renderPreview(Gui gui, Layout layout, int xSizeScreen, int ySizeScreen) {
         followHandedness();
-
         int x = layout.getComponentX(this, xSizeScreen);
         int y = layout.getComponentY(this, ySizeScreen);
-
-        GLRenderer.pushFrame();
         GLRenderer.setColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GLRenderer.enableState(State.BLEND);
-        GLRenderer.setBlendFunc(BlendFactor.SRC_ALPHA, BlendFactor.ONE_MINUS_SRC_ALPHA);
-
-        mc.textureManager.loadTexture(HUD_TEXTURE).bind();
-        gui.drawTexturedModalRect(x, y, 0, 0, SLOT_SIZE, SLOT_SIZE);
-        gui.drawTexturedModalRect(x - 1, y - 1, 0, SELECTOR_V, SELECTOR_SIZE, SELECTOR_SIZE);
-
-        GLRenderer.popFrame();
+        gui.drawGuiIcon(x, y, SLOT_SIZE, SLOT_SIZE, TextureRegistry.getTexture(SLOT_SPRITE));
+        if (HandIndicator.type() != IndicatorType.NONE) {
+            drawIndicator(gui, x - 1, y - 1);
+        }
     }
 
-    private void renderPriorityIndicator(HudIngame hud, int offhandSlotX, int offhandSlotY,
-                                         float offhandAnimProgress, int xSizeScreen, int ySizeScreen) {
-        IndicatorType indicatorType = BetterWithHandsOptions.INDICATOR_TYPE.value;
-        if (indicatorType == IndicatorType.NONE) {
-            return;
-        }
-
-        boolean swapPriority = BetterWithHandsOptions.SWAP_HAND_PRIORITY.value;
-        boolean useWhenEmpty = BetterWithHandsOptions.USE_OFFHAND_WHEN_MAIN_EMPTY.value;
-        boolean showOnlyWithOffhand = BetterWithHandsOptions.SHOW_INDICATOR_ONLY_WITH_OFFHAND.value;
-
-        ItemStack offhand = ((OffhandCapable) mc.thePlayer.inventory).betterWithHands$getOffhandItem();
-        ItemStack mainhand = mc.thePlayer.inventory.getCurrentItem();
-
-        boolean dualWieldSwords = HandLogic.isDualWieldingSwords(mainhand, offhand);
-
-        boolean offhandActive = false;
-        if (offhand != null) {
-            if (swapPriority) {
-                offhandActive = true;
-            } else if (useWhenEmpty && mainhand == null) {
-                offhandActive = true;
-            }
-        }
-
-        boolean offhandSlotVisible = offhandAnimProgress > 0.01F;
-
-        if (showOnlyWithOffhand && offhand == null && !offhandSlotVisible) {
-            return;
-        }
-
-        int mainSlotX;
-        int mainSlotY;
-
-        HudComponent hotbar = HudComponents.HOTBAR;
-        int hotbarX = hotbar.getLayout().getComponentX(hotbar, xSizeScreen);
-        int hotbarY = hotbar.getLayout().getComponentY(hotbar, ySizeScreen);
-        int selectedSlot = mc.thePlayer.inventory.getCurrentSlot();
-        int hotbarOffset = mc.thePlayer.inventory.getHotbarOffset();
-        int relativeSlot = selectedSlot - hotbarOffset;
-        mainSlotX = hotbarX + 4 + relativeSlot * 20;
-        mainSlotY = hotbarY - 1;
-
-        int offIndicatorX = offhandSlotX - 1;
-        int offIndicatorY = offhandSlotY - 1;
-
-        GLRenderer.pushFrame();
+    private static void drawIndicator(Gui gui, int x, int y) {
+        TessellatorGeneral tessellator = GLRenderer.getTessellator();
         GLRenderer.enableState(State.BLEND);
         GLRenderer.setBlendFunc(BlendFactor.SRC_ALPHA, BlendFactor.ONE_MINUS_SRC_ALPHA);
-        GLRenderer.setColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-        if (indicatorType == IndicatorType.BORDER) {
-            mc.textureManager.loadTexture("/assets/better_with_hands/textures/gui/selector.png").bind();
-
-            if (dualWieldSwords && offhandSlotVisible) {
-                hud.drawTexturedModalRect(offIndicatorX, offIndicatorY, 0, 0, 24, 24, 1.0 / 24, 1.0 / 24);
-                hud.drawTexturedModalRect(mainSlotX, mainSlotY, 0, 0, 24, 24, 1.0 / 24, 1.0 / 24);
-            } else if (offhandActive && offhandSlotVisible) {
-                hud.drawTexturedModalRect(offIndicatorX, offIndicatorY, 0, 0, 24, 24, 1.0 / 24, 1.0 / 24);
-            } else if (!offhandActive) {
-                hud.drawTexturedModalRect(mainSlotX, mainSlotY, 0, 0, 24, 24, 1.0 / 24, 1.0 / 24);
-            }
-        } else if (indicatorType == IndicatorType.DOT) {
-            mc.textureManager.loadTexture("/assets/better_with_hands/textures/gui/dot.png").bind();
-
-            int dotW = 5, dotH = 3;
-            int mainDotX = mainSlotX + (24 - dotW) / 2;
-            int mainDotY = mainSlotY;
-            int offDotX = offIndicatorX + (24 - dotW) / 2;
-            int offDotY = offIndicatorY;
-
-            if (dualWieldSwords && offhandSlotVisible) {
-                hud.drawTexturedModalRect(offDotX, offDotY, 0, 0, dotW, dotH, 1.0 / dotW, 1.0 / dotH);
-                hud.drawTexturedModalRect(mainDotX, mainDotY, 0, 0, dotW, dotH, 1.0 / dotW, 1.0 / dotH);
-            } else if (offhandActive && offhandSlotVisible) {
-                hud.drawTexturedModalRect(offDotX, offDotY, 0, 0, dotW, dotH, 1.0 / dotW, 1.0 / dotH);
-            } else if (!offhandActive) {
-                hud.drawTexturedModalRect(mainDotX, mainDotY, 0, 0, dotW, dotH, 1.0 / dotW, 1.0 / dotH);
-            }
-        } else if (indicatorType == IndicatorType.ARROW) {
-            mc.textureManager.loadTexture("/assets/better_with_hands/textures/gui/priority_indicator.png").bind();
-
-            int arrowW = 5, arrowH = 5;
-            int mainArrowX = mainSlotX + (24 - arrowW) / 2;
-            int mainArrowY = mainSlotY;
-            int offArrowX = offIndicatorX + (24 - arrowW) / 2;
-            int offArrowY = offIndicatorY;
-
-            if (dualWieldSwords && offhandSlotVisible) {
-                hud.drawTexturedModalRect(offArrowX, offArrowY, 0, 0, arrowW, arrowH, 1.0 / arrowW, 1.0 / arrowH);
-                hud.drawTexturedModalRect(mainArrowX, mainArrowY, 0, 0, arrowW, arrowH, 1.0 / arrowW, 1.0 / arrowH);
-            } else if (offhandActive && offhandSlotVisible) {
-                hud.drawTexturedModalRect(offArrowX, offArrowY, 0, 0, arrowW, arrowH, 1.0 / arrowW, 1.0 / arrowH);
-            } else if (!offhandActive) {
-                hud.drawTexturedModalRect(mainArrowX, mainArrowY, 0, 0, arrowW, arrowH, 1.0 / arrowW, 1.0 / arrowH);
-            }
-        }
-
-        GLRenderer.popFrame();
+        TextureRegistry.guiSpriteAtlas.bind();
+        tessellator.startDrawingQuads();
+        HandIndicator.addIndicator(gui, tessellator, x, y);
+        tessellator.draw();
     }
 
-    private boolean isSameItemType(ItemStack a, ItemStack b) {
-        if (a == null && b == null) return true;
-        if (a == null || b == null) return false;
-        return a.itemID == b.itemID && a.getMetadata() == b.getMetadata();
+    private static void renderItem(ItemStack stack, int x, int y, float partialTick) {
+        ItemModel model = ItemModelDispatcher.getInstance().getDispatch(stack.getItem());
+        GLRenderer.enableState(State.DEPTH_TEST);
+        Lighting.enableInventoryLight();
+        float bounce = stack.animationsToGo - partialTick;
+        if (bounce > 0.0F) {
+            float scale = 1.0F + bounce / 5.0F;
+            GLRenderer.pushFrame();
+            GLRenderer.modelM4f().translate(x + 8, y + 12, 0.0F);
+            GLRenderer.modelM4f().scale(1.0F / scale, (scale + 1.0F) / 2.0F, 1.0F);
+            GLRenderer.modelM4f().translate(-(x + 8), -(y + 12), 0.0F);
+        }
+        model.renderGui(GLRenderer.getTessellator(), null, stack, x, y, LightIndexHelper.lightIndex2i(15, 15), partialTick);
+        if (bounce > 0.0F) {
+            GLRenderer.popFrame();
+        }
+        model.renderItemOverlayIntoGUI(GLRenderer.getTessellator(), mc.font, mc.textureManager, stack, x, y, null, 1.0F);
+        Lighting.disable();
+        GLRenderer.disableState(State.DEPTH_TEST);
+    }
+
+    private static boolean isSameItem(ItemStack a, ItemStack b) {
+        if (a == null || b == null) {
+            return a == b;
+        }
+        return a.itemID == b.itemID && (a.isItemStackDamageable() || a.getMetadata() == b.getMetadata());
     }
 }

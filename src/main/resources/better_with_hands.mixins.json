@@ -15,6 +15,7 @@
 	"client": [
 		"client.GuiInventoryCreativeMixin",
 		"client.GuiInventoryMixin",
+		"client.HudComponentHotbarMixin",
 		"client.ItemRendererMixin",
 		"client.MinecraftMixin",
 		"client.MobRendererPlayerMixin",
