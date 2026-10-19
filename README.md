@@ -10,8 +10,8 @@ Steve finally learned how to use both arms.
 Better With Hands adds an offhand to Better Than Adventure. Hold a torch while you mine, keep blocks ready while you explore, or fight with a sword in each hand.
 
 <p align="center">
-  <img src="https://i.imgur.com/PKFjlWn.gif" width="49%">
-  <img src="https://i.imgur.com/NKeicOM.gif" width="49%">
+  <img src=".github/media/showcase-1.gif" width="49%">
+  <img src=".github/media/showcase-2.gif" width="49%">
 </p>
 
 ### Features
