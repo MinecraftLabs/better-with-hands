@@ -102,7 +102,9 @@ public abstract class ItemRendererMixin {
         player.prevSwingProgress = offhandSwing;
 
         GLRenderer.pushFrame();
-        GLRenderer.setCullFace(CullFace.FRONT);
+        if (!player.isLeftHanded()) {
+            GLRenderer.setCullFace(CullFace.FRONT);
+        }
         GLRenderer.modelM4f().scale(-1.0F, 1.0F, 1.0F);
         this.betterWithHands$renderingOffhand = true;
         try {
