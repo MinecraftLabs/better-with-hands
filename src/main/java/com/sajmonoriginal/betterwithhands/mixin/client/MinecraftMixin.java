@@ -34,10 +34,10 @@ public abstract class MinecraftMixin {
         boolean dualWielding = player.getHeldObject() == null && HandLogic.isDualWieldingSwords(
             player.inventory.getCurrentItem(), ((OffhandCapable) player.inventory).betterWithHands$getOffhandItem());
         if (dualWielding && mc.objectMouseOver instanceof HitResult.Entity hit) {
-            if (!attack) {
+            if (!attack || clickType == 1 && mc.playerController.interact(player, hit.entity)) {
                 return;
             }
-            if (clickType == 0) {
+            if (HandLogic.isOffhandClick(player, clickType)) {
                 ClientHands.attackWithOffhand(mc, player, hit.entity);
             } else {
                 mc.playerController.swingItem(true);

@@ -110,7 +110,7 @@ Mine stone with pickaxe, approach a tree and it automatically switches to axe.
 
 **Dual-Wield Swords**  
 Main hand: Sword | Offhand: Sword  
-Left click attacks with offhand, right click attacks with main hand. Channel your inner Kirito.
+Left click attacks with the sword in your left hand, right click with the one in your right hand, also when playing left-handed. Right click still gets you into boats and minecarts. Channel your inner Kirito.
 
 ## Additional Details
 

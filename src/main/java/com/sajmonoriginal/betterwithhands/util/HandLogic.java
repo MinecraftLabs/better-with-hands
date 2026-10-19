@@ -27,7 +27,7 @@ public final class HandLogic {
 
         ItemStack mainHand = player.inventory.getCurrentItem();
         if (isDualWieldingSwords(mainHand, offhand)) {
-            return action == HandAction.MINE || action == HandAction.SWING;
+            return (action == HandAction.MINE || action == HandAction.SWING) && !player.isLeftHanded();
         }
 
         HandPriority priority = hands.betterWithHands$getHandPriority();
@@ -35,6 +35,10 @@ public final class HandLogic {
             return DynamicPriorityHelper.shouldUseOffhand(mainHand, offhand, action, block);
         }
         return priority.swapPriority() || priority.useWhenEmpty() && mainHand == null;
+    }
+
+    public static boolean isOffhandClick(Player player, int clickType) {
+        return (clickType == 0) != player.isLeftHanded();
     }
 
     public static boolean isOffhandPrimary(Player player) {
