@@ -48,6 +48,8 @@ public final class HandIndicator {
         switch (type()) {
             case BORDER -> gui.addGuiIconDouble(tessellator, x, y, SELECTION_SIZE, SELECTION_SIZE,
                 TextureRegistry.getTexture("better_with_hands:gui/hud/hand_border"));
+            case VANILLA -> gui.addGuiIconDouble(tessellator, x, y, SELECTION_SIZE, SELECTION_SIZE,
+                TextureRegistry.getTexture("better_with_hands:gui/hud/hand_vanilla"));
             case DOT -> gui.addGuiIconDouble(tessellator, markerX, y, MARKER_WIDTH, 3,
                 TextureRegistry.getTexture("better_with_hands:gui/hud/hand_dot"));
             case ARROW -> gui.addGuiIconDouble(tessellator, markerX, y, MARKER_WIDTH, 5,

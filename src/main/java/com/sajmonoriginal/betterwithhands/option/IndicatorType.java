@@ -4,6 +4,7 @@ import net.minecraft.core.util.helper.ITranslatable;
 
 public enum IndicatorType implements ITranslatable {
     BORDER,
+    VANILLA,
     DOT,
     ARROW,
     NONE;

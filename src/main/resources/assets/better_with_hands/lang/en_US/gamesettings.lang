@@ -7,6 +7,7 @@ options.betterWithHands.swapHandPriority=Swap Hand Priority
 options.betterWithHands.dynamicHandPriority=Dynamic Hand Priority (Experimental)
 options.betterWithHands.indicatorType=Indicator Type
 options.betterWithHands.indicatorType.border=Border
+options.betterWithHands.indicatorType.vanilla=Vanilla
 options.betterWithHands.indicatorType.dot=Dot
 options.betterWithHands.indicatorType.arrow=Arrow
 options.betterWithHands.indicatorType.none=None
