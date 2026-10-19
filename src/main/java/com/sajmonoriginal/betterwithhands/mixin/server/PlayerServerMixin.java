@@ -5,7 +5,9 @@ import com.sajmonoriginal.betterwithhands.network.PlayerOffhandSwingMessage;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import com.sajmonoriginal.betterwithhands.util.OffhandScope;
 import com.sajmonoriginal.betterwithhands.util.OffhandSwingCapable;
+import net.minecraft.core.item.IComplexItem;
 import net.minecraft.core.item.ItemStack;
+import net.minecraft.core.net.packet.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.entity.player.PlayerServer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,6 +39,19 @@ public abstract class PlayerServerMixin {
         this.betterWithHands$sendToTrackers(message);
         if (self.containerMenu != self.inventoryMenu) {
             NetworkHandler.sendToPlayer(self, message);
+        }
+    }
+
+    @Inject(method = "onUpdateEntity", at = @At("TAIL"))
+    private void sendOffhandItemData(CallbackInfo ci) {
+        PlayerServer self = (PlayerServer) (Object) this;
+        ItemStack offhand = ((OffhandCapable) self.inventory).betterWithHands$getOffhandItem();
+        if (offhand != null && offhand.getItem() instanceof IComplexItem complexItem
+            && self.playerNetServerHandler.getNumChunkDataPackets() <= 2) {
+            Packet packet = complexItem.sendPacketData(offhand, self.world, self);
+            if (packet != null) {
+                self.playerNetServerHandler.sendPacket(packet);
+            }
         }
     }
 

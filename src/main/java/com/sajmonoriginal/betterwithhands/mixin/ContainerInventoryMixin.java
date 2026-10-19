@@ -149,7 +149,7 @@ public abstract class ContainerInventoryMixin implements OffhandCapable {
     @Inject(method = "decrementAnimations", at = @At("TAIL"))
     private void updateOffhandAnimation(CallbackInfo ci) {
         if (this.betterWithHands$offhandItem != null && this.player.world != null) {
-            this.betterWithHands$offhandItem.updateAnimation(this.player.world, this.player, 40, false);
+            this.betterWithHands$offhandItem.updateAnimation(this.player.world, this.player, 40, true);
         }
     }
 
