@@ -1,5 +1,6 @@
 package com.sajmonoriginal.betterwithhands.mixin.client;
 
+import com.sajmonoriginal.betterwithhands.client.OffhandFirstPerson;
 import com.sajmonoriginal.betterwithhands.util.OffhandCapable;
 import com.sajmonoriginal.betterwithhands.util.OffhandScope;
 import com.sajmonoriginal.betterwithhands.util.OffhandSwingCapable;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = ItemRenderer.class, remap = false)
-public abstract class ItemRendererMixin {
+public abstract class ItemRendererMixin implements OffhandFirstPerson {
     @Unique
     private static final long EQUIP_ANIMATION_MS = 300L;
 
@@ -53,6 +54,11 @@ public abstract class ItemRendererMixin {
 
     @Unique
     private boolean betterWithHands$animatingIn = false;
+
+    @Override
+    public boolean betterWithHands$isRenderingOffhand() {
+        return this.betterWithHands$renderingOffhand;
+    }
 
     @Inject(method = {"resetEquippedProgress", "updateEquippedItem"}, at = @At("HEAD"), cancellable = true)
     private void keepMainHandDuringOffhandAction(CallbackInfo ci) {

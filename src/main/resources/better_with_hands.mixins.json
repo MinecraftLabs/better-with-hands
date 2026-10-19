@@ -14,6 +14,7 @@
 	],
 	"client": [
 		"client.HudComponentHotbarMixin",
+		"client.ItemModelMapMixin",
 		"client.ItemRendererMixin",
 		"client.MinecraftMixin",
 		"client.MobRendererBipedMixin",
